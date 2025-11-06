@@ -12,18 +12,9 @@ const Wallet = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    checkAuth();
+    // Bypass auth - use demo data
+    loadWalletData('demo-user');
   }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate("/login");
-      return;
-    }
-    
-    loadWalletData(session.user.id);
-  };
 
   const loadWalletData = async (userId: string) => {
     // Load wallet

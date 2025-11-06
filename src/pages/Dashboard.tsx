@@ -19,19 +19,10 @@ const Dashboard = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    checkAuth();
+    // Bypass auth - use demo data
+    setUser({ id: 'demo-user', email: 'demo@refo.app' });
+    loadDashboardData('demo-user');
   }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) {
-      navigate("/login");
-      return;
-    }
-    
-    setUser(session.user);
-    loadDashboardData(session.user.id);
-  };
 
   const loadDashboardData = async (userId: string) => {
     // Load wallet
