@@ -15,15 +15,19 @@ const Profile = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    // Bypass auth - use demo data
-    setUser({ 
-      id: 'demo-user', 
-      email: 'demo@refo.app',
-      created_at: new Date().toISOString(),
-      email_confirmed_at: new Date().toISOString()
-    });
-    loadProfile('demo-user');
+    checkAuth();
   }, []);
+
+  const checkAuth = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/login");
+      return;
+    }
+    
+    setUser(session.user);
+    loadProfile(session.user.id);
+  };
 
   const loadProfile = async (userId: string) => {
     const { data } = await supabase
@@ -36,10 +40,12 @@ const Profile = () => {
   };
 
   const handleLogout = async () => {
+    await supabase.auth.signOut();
     toast({
-      title: "Demo Mode",
-      description: "Authentication is currently disabled",
+      title: "Logged out",
+      description: "You have been successfully logged out",
     });
+    navigate("/");
   };
 
   return (
