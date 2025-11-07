@@ -13,17 +13,8 @@ const Index = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
-    checkAuth();
     loadOffers();
   }, []);
-
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    if (session) {
-      setIsLoggedIn(true);
-      navigate("/dashboard");
-    }
-  };
 
   const loadOffers = async () => {
     const { data } = await supabase
@@ -61,7 +52,7 @@ const Index = () => {
             
             <Button
               size="lg"
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/dashboard")}
               className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8 py-6 text-lg font-semibold shadow-lg hover:shadow-xl transition-all"
             >
               Get Started Free
@@ -104,7 +95,7 @@ const Index = () => {
                 logoUrl={offer.logo_url}
                 reward={offer.reward}
                 category={offer.category}
-                onStartTask={() => navigate("/login")}
+                onStartTask={() => navigate("/dashboard")}
               />
             ))
           ) : (
@@ -130,7 +121,7 @@ const Index = () => {
         </div>
       </footer>
 
-      {isLoggedIn && <BottomNav />}
+      <BottomNav />
     </div>
   );
 };

@@ -24,12 +24,15 @@ const BottomNav = () => {
               key={item.path}
               to={item.path}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 flex-1 transition-all duration-200",
+                "flex flex-col items-center justify-center gap-1 flex-1 transition-all duration-150 relative",
                 isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
               )}
             >
-              <Icon className={cn("h-5 w-5", isActive && "scale-110")} />
-              <span className="text-xs font-medium">{item.label}</span>
+              {isActive && (
+                <div className="absolute inset-0 bg-primary/10 rounded-lg blur-sm" />
+              )}
+              <Icon className={cn("h-5 w-5 relative z-10", isActive && "scale-110")} />
+              <span className="text-xs font-medium relative z-10">{item.label}</span>
             </Link>
           );
         })}
