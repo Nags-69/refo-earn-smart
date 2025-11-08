@@ -1,13 +1,14 @@
 import { useState } from "react";
-import { LayoutDashboard, Package, Users, CreditCard, MessageSquare, Settings } from "lucide-react";
+import { LayoutDashboard, Package, Users, CreditCard, MessageSquare, Settings, Link2 } from "lucide-react";
 import Overview from "@/components/admin/Overview";
 import OffersManagement from "@/components/admin/OffersManagement";
 import ReferralsManagement from "@/components/admin/ReferralsManagement";
 import PayoutsManagement from "@/components/admin/PayoutsManagement";
 import ChatControl from "@/components/admin/ChatControl";
 import AdminSettings from "@/components/admin/AdminSettings";
+import AffiliatesManagement from "@/components/admin/AffiliatesManagement";
 
-type AdminSection = "overview" | "offers" | "referrals" | "payouts" | "chat" | "settings";
+type AdminSection = "overview" | "offers" | "referrals" | "payouts" | "chat" | "affiliates" | "settings";
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
@@ -17,6 +18,7 @@ const Admin = () => {
     { id: "offers" as AdminSection, label: "Offers", icon: Package },
     { id: "referrals" as AdminSection, label: "Referrals", icon: Users },
     { id: "payouts" as AdminSection, label: "Payouts", icon: CreditCard },
+    { id: "affiliates" as AdminSection, label: "Affiliates", icon: Link2 },
     { id: "chat" as AdminSection, label: "Chat Control", icon: MessageSquare },
     { id: "settings" as AdminSection, label: "Settings", icon: Settings },
   ];
@@ -31,6 +33,8 @@ const Admin = () => {
         return <ReferralsManagement />;
       case "payouts":
         return <PayoutsManagement />;
+      case "affiliates":
+        return <AffiliatesManagement />;
       case "chat":
         return <ChatControl />;
       case "settings":

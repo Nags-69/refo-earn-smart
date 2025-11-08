@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   role: "user" | "assistant";
@@ -12,18 +14,94 @@ interface Message {
 
 const RefoAI = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: "assistant",
-      content: "Hi! I'm Refo AI. I can help you with offers, payouts, verification, and affiliate questions. How can I assist you today?",
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [chatId, setChatId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
+
+  // Initialize or fetch existing chat
+  useEffect(() => {
+    const initializeChat = async () => {
+      try {
+        const userId = "demo-user";
+
+        // Check if user has existing chat
+        const { data: existingChat, error: fetchError } = await supabase
+          .from("chats")
+          .select("*")
+          .eq("user_id", userId)
+          .order("last_updated", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (fetchError && fetchError.code !== "PGRST116") {
+          console.error("Error fetching chat:", fetchError);
+          return;
+        }
+
+        if (existingChat) {
+          setChatId(existingChat.chat_id);
+
+          // Fetch messages for this chat
+          const { data: chatMessages, error: messagesError } = await supabase
+            .from("chat_messages")
+            .select("*")
+            .eq("chat_id", existingChat.chat_id)
+            .order("timestamp", { ascending: true });
+
+          if (!messagesError && chatMessages) {
+            setMessages(
+              chatMessages.map((msg) => ({
+                role: msg.sender === "user" ? "user" : "assistant",
+                content: msg.message,
+              }))
+            );
+          }
+        } else {
+          // Create new chat
+          const { data: newChat, error: createError } = await supabase
+            .from("chats")
+            .insert({ user_id: userId, active_responder: "AI" })
+            .select()
+            .single();
+
+          if (!createError && newChat) {
+            setChatId(newChat.chat_id);
+
+            // Add welcome message
+            const welcomeMsg = {
+              chat_id: newChat.chat_id,
+              user_id: userId,
+              sender: "assistant",
+              message:
+                "Hi! I'm Refo AI. I can help you with offers, payouts, verification, and affiliate questions. How can I assist you today?",
+              responder_mode: "AI",
+            };
+
+            await supabase.from("chat_messages").insert(welcomeMsg);
+
+            setMessages([
+              {
+                role: "assistant",
+                content: welcomeMsg.message,
+              },
+            ]);
+          }
+        }
+      } catch (error) {
+        console.error("Error initializing chat:", error);
+      }
+    };
+
+    if (isOpen) {
+      initializeChat();
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     scrollToBottom();
@@ -101,50 +179,105 @@ const RefoAI = () => {
     }
   }, [isDragging]);
 
-  const sendMessage = () => {
-    if (!input.trim()) return;
+  const sendMessage = async () => {
+    if (!input.trim() || !chatId) return;
 
-    const userMessage: Message = { role: "user", content: input };
+    const userId = "demo-user";
+    const userMessageText = input.trim();
+
+    const userMessage: Message = { role: "user", content: userMessageText };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
-    // Simple rule-based responses
-    setTimeout(() => {
-      const lowerInput = input.toLowerCase();
-      let response = "I'm unable to answer this kind of question.";
+    try {
+      // Check current active responder
+      const { data: chat } = await supabase
+        .from("chats")
+        .select("active_responder")
+        .eq("chat_id", chatId)
+        .single();
 
-      if (
-        lowerInput.includes("offer") ||
-        lowerInput.includes("task") ||
-        lowerInput.includes("reward")
-      ) {
-        response = "You can find available offers in the Dashboard. Complete tasks to earn rewards!";
-      } else if (
-        lowerInput.includes("payout") ||
-        lowerInput.includes("withdraw") ||
-        lowerInput.includes("payment")
-      ) {
-        response = "Check your Wallet to see your balance and request payouts. Minimum payout is usually $5.";
-      } else if (
-        lowerInput.includes("verify") ||
-        lowerInput.includes("verification") ||
-        lowerInput.includes("proof")
-      ) {
-        response = "Submit proof of task completion in the Dashboard. Our team reviews submissions within 24-48 hours.";
-      } else if (
-        lowerInput.includes("affiliate") ||
-        lowerInput.includes("referral") ||
-        lowerInput.includes("invite")
-      ) {
-        response = "Share your unique affiliate link from the Profile page to earn commissions on referrals!";
+      const responderMode = chat?.active_responder || "AI";
+
+      // Save user message to database
+      await supabase.from("chat_messages").insert({
+        chat_id: chatId,
+        user_id: userId,
+        sender: "user",
+        message: userMessageText,
+        responder_mode: responderMode,
+      });
+
+      // Only generate AI response if not in ADMIN mode
+      if (responderMode === "AI") {
+        setTimeout(async () => {
+          const lowerInput = userMessageText.toLowerCase();
+          let response = "I'm unable to answer this kind of question.";
+
+          if (
+            lowerInput.includes("offer") ||
+            lowerInput.includes("task") ||
+            lowerInput.includes("reward")
+          ) {
+            response =
+              "You can find available offers in the Dashboard. Complete tasks to earn rewards!";
+          } else if (
+            lowerInput.includes("payout") ||
+            lowerInput.includes("withdraw") ||
+            lowerInput.includes("payment")
+          ) {
+            response =
+              "Check your Wallet to see your balance and request payouts. Minimum payout is usually $5.";
+          } else if (
+            lowerInput.includes("verify") ||
+            lowerInput.includes("verification") ||
+            lowerInput.includes("proof")
+          ) {
+            response =
+              "Submit proof of task completion in the Dashboard. Our team reviews submissions within 24-48 hours.";
+          } else if (
+            lowerInput.includes("affiliate") ||
+            lowerInput.includes("referral") ||
+            lowerInput.includes("invite")
+          ) {
+            response =
+              "Share your unique affiliate link from the Profile page to earn commissions on referrals!";
+          }
+
+          const assistantMessage: Message = {
+            role: "assistant",
+            content: response,
+          };
+          setMessages((prev) => [...prev, assistantMessage]);
+
+          // Save assistant message to database
+          try {
+            await supabase.from("chat_messages").insert({
+              chat_id: chatId,
+              user_id: userId,
+              sender: "assistant",
+              message: response,
+              responder_mode: "AI",
+            });
+
+            // Update chat last_updated
+            await supabase
+              .from("chats")
+              .update({ last_updated: new Date().toISOString() })
+              .eq("chat_id", chatId);
+          } catch (error) {
+            console.error("Error saving assistant message:", error);
+          }
+        }, 500);
       }
-
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: response,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
-    }, 500);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      toast({
+        title: "Error sending message",
+        description: "Failed to send your message. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -180,7 +313,10 @@ const RefoAI = () => {
             className="fixed inset-0 bg-black/20"
             onClick={() => setIsOpen(false)}
           />
-          <Card className="relative w-full max-w-md bg-background shadow-2xl rounded-3xl overflow-hidden transition-all duration-200" style={{ maxHeight: "60vh" }}>
+          <Card
+            className="relative w-full max-w-md bg-background shadow-2xl rounded-3xl overflow-hidden transition-all duration-200"
+            style={{ maxHeight: "60vh" }}
+          >
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-border bg-card">
               <div className="flex items-center gap-2">
@@ -189,7 +325,9 @@ const RefoAI = () => {
                 </div>
                 <div>
                   <h3 className="font-heading font-semibold">Refo AI</h3>
-                  <p className="text-xs text-muted-foreground">Your assistant</p>
+                  <p className="text-xs text-muted-foreground">
+                    Your assistant
+                  </p>
                 </div>
               </div>
               <Button
@@ -203,7 +341,10 @@ const RefoAI = () => {
             </div>
 
             {/* Messages */}
-            <div className="overflow-y-auto p-4 space-y-3" style={{ height: "calc(60vh - 140px)" }}>
+            <div
+              className="overflow-y-auto p-4 space-y-3"
+              style={{ height: "calc(60vh - 140px)" }}
+            >
               {messages.map((message, index) => (
                 <div
                   key={index}

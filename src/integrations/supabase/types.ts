@@ -41,6 +41,68 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_messages: {
+        Row: {
+          chat_id: string
+          id: string
+          message: string
+          responder_mode: string
+          sender: string
+          timestamp: string
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          id?: string
+          message: string
+          responder_mode: string
+          sender: string
+          timestamp?: string
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          id?: string
+          message?: string
+          responder_mode?: string
+          sender?: string
+          timestamp?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chat_messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "chats"
+            referencedColumns: ["chat_id"]
+          },
+        ]
+      }
+      chats: {
+        Row: {
+          active_responder: string
+          chat_id: string
+          created_at: string
+          last_updated: string
+          user_id: string
+        }
+        Insert: {
+          active_responder?: string
+          chat_id?: string
+          created_at?: string
+          last_updated?: string
+          user_id: string
+        }
+        Update: {
+          active_responder?: string
+          chat_id?: string
+          created_at?: string
+          last_updated?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       offers: {
         Row: {
           category: string | null
