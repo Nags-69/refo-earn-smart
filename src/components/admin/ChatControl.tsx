@@ -52,11 +52,22 @@ const ChatControl = () => {
       if (chatsData) {
         const chatsWithDetails = await Promise.all(
           chatsData.map(async (chat) => {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("email")
-              .eq("id", chat.user_id)
-              .single();
+            let userEmail = "Demo User";
+            
+            // Try to get profile email, fallback to demo user
+            try {
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("email")
+                .eq("id", chat.user_id)
+                .maybeSingle();
+              
+              if (profile?.email) {
+                userEmail = profile.email;
+              }
+            } catch (error) {
+              console.log("Could not fetch profile for", chat.user_id);
+            }
 
             const { count } = await supabase
               .from("chat_messages")
@@ -65,7 +76,7 @@ const ChatControl = () => {
 
             return {
               ...chat,
-              user_email: profile?.email || "demo-user",
+              user_email: userEmail,
               message_count: count || 0,
             };
           })

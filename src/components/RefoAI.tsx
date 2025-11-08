@@ -24,17 +24,19 @@ const RefoAI = () => {
   const buttonRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
+  // Use a valid demo UUID instead of "demo-user" string
+  const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
+
   // Initialize or fetch existing chat
   useEffect(() => {
     const initializeChat = async () => {
       try {
-        const userId = "demo-user";
 
         // Check if user has existing chat
         const { data: existingChat, error: fetchError } = await supabase
           .from("chats")
           .select("*")
-          .eq("user_id", userId)
+          .eq("user_id", DEMO_USER_ID)
           .order("last_updated", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -66,7 +68,7 @@ const RefoAI = () => {
           // Create new chat
           const { data: newChat, error: createError } = await supabase
             .from("chats")
-            .insert({ user_id: userId, active_responder: "AI" })
+            .insert({ user_id: DEMO_USER_ID, active_responder: "AI" })
             .select()
             .single();
 
@@ -76,7 +78,7 @@ const RefoAI = () => {
             // Add welcome message
             const welcomeMsg = {
               chat_id: newChat.chat_id,
-              user_id: userId,
+              user_id: DEMO_USER_ID,
               sender: "assistant",
               message:
                 "Hi! I'm Refo AI. I can help you with offers, payouts, verification, and affiliate questions. How can I assist you today?",
@@ -182,7 +184,6 @@ const RefoAI = () => {
   const sendMessage = async () => {
     if (!input.trim() || !chatId) return;
 
-    const userId = "demo-user";
     const userMessageText = input.trim();
 
     const userMessage: Message = { role: "user", content: userMessageText };
@@ -202,7 +203,7 @@ const RefoAI = () => {
       // Save user message to database
       await supabase.from("chat_messages").insert({
         chat_id: chatId,
-        user_id: userId,
+        user_id: DEMO_USER_ID,
         sender: "user",
         message: userMessageText,
         responder_mode: responderMode,
@@ -254,7 +255,7 @@ const RefoAI = () => {
           try {
             await supabase.from("chat_messages").insert({
               chat_id: chatId,
-              user_id: userId,
+              user_id: DEMO_USER_ID,
               sender: "assistant",
               message: response,
               responder_mode: "AI",
