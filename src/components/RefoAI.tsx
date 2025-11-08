@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { streamAIChat } from "@/utils/aiChat";
 
 interface Message {
   role: "user" | "assistant";
@@ -16,6 +17,7 @@ const RefoAI = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
+  const [isTyping, setIsTyping] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
@@ -211,68 +213,60 @@ const RefoAI = () => {
 
       // Only generate AI response if not in ADMIN mode
       if (responderMode === "AI") {
-        setTimeout(async () => {
-          const lowerInput = userMessageText.toLowerCase();
-          let response = "I'm unable to answer this kind of question.";
+        setIsTyping(true);
 
-          if (
-            lowerInput.includes("offer") ||
-            lowerInput.includes("task") ||
-            lowerInput.includes("reward")
-          ) {
-            response =
-              "You can find available offers in the Dashboard. Complete tasks to earn rewards!";
-          } else if (
-            lowerInput.includes("payout") ||
-            lowerInput.includes("withdraw") ||
-            lowerInput.includes("payment")
-          ) {
-            response =
-              "Check your Wallet to see your balance and request payouts. Minimum payout is usually $5.";
-          } else if (
-            lowerInput.includes("verify") ||
-            lowerInput.includes("verification") ||
-            lowerInput.includes("proof")
-          ) {
-            response =
-              "Submit proof of task completion in the Dashboard. Our team reviews submissions within 24-48 hours.";
-          } else if (
-            lowerInput.includes("affiliate") ||
-            lowerInput.includes("referral") ||
-            lowerInput.includes("invite")
-          ) {
-            response =
-              "Share your unique affiliate link from the Profile page to earn commissions on referrals!";
-          }
+        let assistantContent = "";
+        const conversationMessages = messages.map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+        }));
 
-          const assistantMessage: Message = {
-            role: "assistant",
-            content: response,
-          };
-          setMessages((prev) => [...prev, assistantMessage]);
-
-          // Save assistant message to database
-          try {
-            await supabase.from("chat_messages").insert({
-              chat_id: chatId,
-              user_id: DEMO_USER_ID,
-              sender: "assistant",
-              message: response,
-              responder_mode: "AI",
+        await streamAIChat({
+          messages: [...conversationMessages, { role: "user", content: userMessageText }],
+          onDelta: (chunk) => {
+            assistantContent += chunk;
+            setMessages((prev) => {
+              const last = prev[prev.length - 1];
+              if (last?.role === "assistant") {
+                return prev.map((m, i) =>
+                  i === prev.length - 1 ? { ...m, content: assistantContent } : m
+                );
+              }
+              return [...prev, { role: "assistant", content: assistantContent }];
             });
+          },
+          onDone: async () => {
+            setIsTyping(false);
+            try {
+              await supabase.from("chat_messages").insert({
+                chat_id: chatId,
+                user_id: DEMO_USER_ID,
+                sender: "assistant",
+                message: assistantContent,
+                responder_mode: "AI",
+              });
 
-            // Update chat last_updated
-            await supabase
-              .from("chats")
-              .update({ last_updated: new Date().toISOString() })
-              .eq("chat_id", chatId);
-          } catch (error) {
-            console.error("Error saving assistant message:", error);
-          }
-        }, 500);
+              await supabase
+                .from("chats")
+                .update({ last_updated: new Date().toISOString() })
+                .eq("chat_id", chatId);
+            } catch (error) {
+              console.error("Error saving assistant message:", error);
+            }
+          },
+          onError: (error) => {
+            setIsTyping(false);
+            toast({
+              title: "AI Error",
+              description: error,
+              variant: "destructive",
+            });
+          },
+        });
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      setIsTyping(false);
       toast({
         title: "Error sending message",
         description: "Failed to send your message. Please try again.",
@@ -366,6 +360,17 @@ const RefoAI = () => {
                   </div>
                 </div>
               ))}
+              {isTyping && (
+                <div className="flex justify-start">
+                  <div className="max-w-[80%] px-4 py-2 rounded-2xl text-sm bg-secondary text-secondary-foreground">
+                    <div className="flex gap-1">
+                      <span className="animate-bounce">●</span>
+                      <span className="animate-bounce animation-delay-200">●</span>
+                      <span className="animate-bounce animation-delay-400">●</span>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div ref={messagesEndRef} />
             </div>
 
@@ -381,7 +386,7 @@ const RefoAI = () => {
                 />
                 <Button
                   onClick={sendMessage}
-                  disabled={!input.trim()}
+                  disabled={!input.trim() || isTyping}
                   className="rounded-full bg-primary hover:bg-primary/90"
                   size="icon"
                 >
