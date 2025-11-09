@@ -5,9 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { MessageSquare, Bot, User as UserIcon } from "lucide-react";
+import { MessageSquare, Bot, User as UserIcon, PauseCircle } from "lucide-react";
 
 type Chat = {
   chat_id: string;
@@ -35,7 +36,47 @@ const ChatControl = () => {
 
   useEffect(() => {
     fetchChats();
-  }, []);
+
+    // Set up real-time subscription for chats
+    const chatsChannel = supabase
+      .channel('chats-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chats'
+        },
+        () => {
+          fetchChats();
+        }
+      )
+      .subscribe();
+
+    // Set up real-time subscription for messages
+    const messagesChannel = supabase
+      .channel('messages-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'chat_messages'
+        },
+        (payload) => {
+          if (selectedChat && payload.new && (payload.new as any).chat_id === selectedChat.chat_id) {
+            fetchMessages(selectedChat.chat_id);
+          }
+          fetchChats();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(chatsChannel);
+      supabase.removeChannel(messagesChannel);
+    };
+  }, [selectedChat]);
 
   const fetchChats = async () => {
     try {
@@ -117,19 +158,29 @@ const ChatControl = () => {
   };
 
   const toggleResponder = async (chat: Chat) => {
-    const newMode = chat.active_responder === "AI" ? "ADMIN" : "AI";
+    const newMode = chat.active_responder === "AI" ? "ADMIN_CONTROLLED" : "AI";
 
     try {
       const { error } = await supabase
         .from("chats")
-        .update({ active_responder: newMode })
+        .update({ 
+          active_responder: newMode,
+          last_updated: new Date().toISOString()
+        })
         .eq("chat_id", chat.chat_id);
 
       if (error) {
-        toast({ title: "Update failed", variant: "destructive" });
+        toast({ 
+          title: "Failed to update chat", 
+          description: error.message,
+          variant: "destructive" 
+        });
       } else {
         toast({
-          title: `Chat mode: ${newMode === "AI" ? "AI Resumed" : "Admin Takeover"}`,
+          title: newMode === "AI" ? "✅ AI Resumed" : "🔴 Admin Takeover",
+          description: newMode === "AI" 
+            ? "AI will respond to user messages" 
+            : "AI paused - Admin will handle responses"
         });
         fetchChats();
         if (selectedChat?.chat_id === chat.chat_id) {
@@ -138,7 +189,33 @@ const ChatControl = () => {
       }
     } catch (error) {
       console.error("Error toggling responder:", error);
-      toast({ title: "Connection error", variant: "destructive" });
+      toast({ 
+        title: "Connection error", 
+        description: "Unable to update chat status",
+        variant: "destructive" 
+      });
+    }
+  };
+
+  const getStatusBadge = (active_responder: string) => {
+    if (active_responder === "AI") {
+      return (
+        <Badge className="bg-green-500/20 text-green-700 hover:bg-green-500/30 border-green-500/50">
+          🟢 AI Active
+        </Badge>
+      );
+    } else if (active_responder === "ADMIN_CONTROLLED") {
+      return (
+        <Badge className="bg-red-500/20 text-red-700 hover:bg-red-500/30 border-red-500/50">
+          🔴 Admin Controlled
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge className="bg-yellow-500/20 text-yellow-700 hover:bg-yellow-500/30 border-yellow-500/50">
+          🟡 Paused
+        </Badge>
+      );
     }
   };
 
@@ -159,10 +236,10 @@ const ChatControl = () => {
         return;
       }
 
-      // Update chat to ADMIN mode
+      // Update chat to ADMIN_CONTROLLED mode
       await supabase
         .from("chats")
-        .update({ active_responder: "ADMIN", last_updated: new Date().toISOString() })
+        .update({ active_responder: "ADMIN_CONTROLLED", last_updated: new Date().toISOString() })
         .eq("chat_id", selectedChat.chat_id);
 
       setNewMessage("");
@@ -177,63 +254,96 @@ const ChatControl = () => {
   };
 
   return (
-    <div>
-      <h2 className="text-3xl font-bold mb-6">Chat Control</h2>
-      <Card>
-        <CardHeader>
-          <CardTitle>User Conversations</CardTitle>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold text-foreground">Admin Control Center</h2>
+        <p className="text-muted-foreground mt-1">Manage user conversations with Refo AI</p>
+      </div>
+      
+      <Card className="border-border shadow-sm">
+        <CardHeader className="bg-muted/30">
+          <CardTitle className="text-xl flex items-center gap-2">
+            <MessageSquare className="h-5 w-5 text-primary" />
+            Query List - All Chats
+          </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
-                <TableRow>
-                  <TableHead>User</TableHead>
-                  <TableHead>Messages</TableHead>
-                  <TableHead>Mode</TableHead>
-                  <TableHead>Last Updated</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                <TableRow className="bg-muted/20">
+                  <TableHead className="font-semibold">User</TableHead>
+                  <TableHead className="font-semibold">Last Message</TableHead>
+                  <TableHead className="font-semibold">Active Responder</TableHead>
+                  <TableHead className="font-semibold">Time</TableHead>
+                  <TableHead className="font-semibold">Status</TableHead>
+                  <TableHead className="text-right font-semibold">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {chats.map((chat) => (
-                  <TableRow key={chat.chat_id}>
-                    <TableCell className="font-medium">{chat.user_email}</TableCell>
-                    <TableCell>{chat.message_count}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded-full text-xs flex items-center gap-1 w-fit ${
-                          chat.active_responder === "AI"
-                            ? "bg-primary/20 text-primary"
-                            : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {chat.active_responder === "AI" ? (
-                          <Bot className="h-3 w-3" />
-                        ) : (
-                          <UserIcon className="h-3 w-3" />
-                        )}
-                        {chat.active_responder}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {new Date(chat.last_updated).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button size="sm" onClick={() => handleViewChat(chat)}>
-                        <MessageSquare className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant={chat.active_responder === "AI" ? "default" : "outline"}
-                        onClick={() => toggleResponder(chat)}
-                      >
-                        {chat.active_responder === "AI" ? "Take Over" : "Resume AI"}
-                      </Button>
+                {chats.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      No chats yet. Chats will appear here when users interact with Refo AI.
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  chats.map((chat) => (
+                    <TableRow 
+                      key={chat.chat_id}
+                      className="hover:bg-muted/30 transition-colors"
+                    >
+                      <TableCell className="font-medium">{chat.user_email}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {chat.message_count} message{chat.message_count !== 1 ? 's' : ''}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {chat.active_responder === "AI" ? (
+                            <Bot className="h-4 w-4 text-green-600" />
+                          ) : chat.active_responder === "ADMIN_CONTROLLED" ? (
+                            <UserIcon className="h-4 w-4 text-red-600" />
+                          ) : (
+                            <PauseCircle className="h-4 w-4 text-yellow-600" />
+                          )}
+                          <span className="text-sm font-medium">
+                            {chat.active_responder === "ADMIN_CONTROLLED" ? "ADMIN" : chat.active_responder}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {new Date(chat.last_updated).toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(chat.active_responder)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => handleViewChat(chat)}
+                            className="hover:bg-primary/10"
+                          >
+                            <MessageSquare className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={chat.active_responder === "AI" ? "destructive" : "default"}
+                            onClick={() => toggleResponder(chat)}
+                            className={chat.active_responder === "AI" 
+                              ? "bg-red-600 hover:bg-red-700" 
+                              : "bg-green-600 hover:bg-green-700"
+                            }
+                          >
+                            {chat.active_responder === "AI" ? "Take Over" : "Resume AI"}
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
@@ -241,51 +351,98 @@ const ChatControl = () => {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh]">
-          <DialogHeader>
-            <DialogTitle>
-              Chat with {selectedChat?.user_email} - Mode:{" "}
-              {selectedChat?.active_responder}
-            </DialogTitle>
+        <DialogContent className="max-w-3xl max-h-[85vh]">
+          <DialogHeader className="border-b pb-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-xl">
+                  💬 Chat with {selectedChat?.user_email}
+                </DialogTitle>
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-sm text-muted-foreground">Current Mode:</span>
+                  {selectedChat && getStatusBadge(selectedChat.active_responder)}
+                </div>
+              </div>
+              {selectedChat && (
+                <Button
+                  size="sm"
+                  variant={selectedChat.active_responder === "AI" ? "destructive" : "default"}
+                  onClick={() => toggleResponder(selectedChat)}
+                  className={selectedChat.active_responder === "AI" 
+                    ? "bg-red-600 hover:bg-red-700" 
+                    : "bg-green-600 hover:bg-green-700"
+                  }
+                >
+                  {selectedChat.active_responder === "AI" ? "Take Over" : "Resume AI"}
+                </Button>
+              )}
+            </div>
           </DialogHeader>
           <div className="flex flex-col h-[60vh]">
             <ScrollArea className="flex-1 pr-4">
-              <div className="space-y-4">
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex ${
-                      msg.sender === "user" ? "justify-end" : "justify-start"
-                    }`}
-                  >
+              <div className="space-y-4 py-4">
+                {messages.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No messages yet
+                  </div>
+                ) : (
+                  messages.map((msg) => (
                     <div
-                      className={`max-w-[70%] rounded-lg px-4 py-2 ${
-                        msg.sender === "user"
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
+                      key={msg.id}
+                      className={`flex ${
+                        msg.sender === "user" ? "justify-end" : "justify-start"
                       }`}
                     >
-                      <p className="text-sm font-medium mb-1">
-                        {msg.sender === "user" ? "User" : "Refo Assistant"}
-                      </p>
-                      <p className="text-sm">{msg.message}</p>
-                      <p className="text-xs opacity-70 mt-1">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </p>
+                      <div
+                        className={`max-w-[75%] rounded-2xl px-4 py-3 shadow-sm ${
+                          msg.sender === "user"
+                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            : "bg-muted text-foreground rounded-bl-sm"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          {msg.sender === "user" ? (
+                            <UserIcon className="h-3 w-3" />
+                          ) : (
+                            <Bot className="h-3 w-3" />
+                          )}
+                          <p className="text-xs font-semibold">
+                            {msg.sender === "user" ? "User" : "Refo Assistant"}
+                          </p>
+                        </div>
+                        <p className="text-sm leading-relaxed">{msg.message}</p>
+                        <p className="text-xs opacity-60 mt-1.5">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))
+                )}
               </div>
             </ScrollArea>
-            <div className="mt-4 flex gap-2">
-              <Input
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={(e) => e.key === "Enter" && handleSendMessage()}
-                placeholder="Type your message..."
-                className="flex-1"
-              />
-              <Button onClick={handleSendMessage}>Send</Button>
+            <div className="mt-4 pt-4 border-t">
+              <div className="flex gap-2">
+                <Input
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === "Enter" && !e.shiftKey && handleSendMessage()}
+                  placeholder="Type your message as Refo Assistant..."
+                  className="flex-1"
+                  disabled={selectedChat?.active_responder === "AI"}
+                />
+                <Button 
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() || selectedChat?.active_responder === "AI"}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  Send
+                </Button>
+              </div>
+              {selectedChat?.active_responder === "AI" && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  ℹ️ AI is active. Take over to send messages manually.
+                </p>
+              )}
             </div>
           </div>
         </DialogContent>
