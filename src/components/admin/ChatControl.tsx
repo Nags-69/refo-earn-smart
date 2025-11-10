@@ -164,8 +164,7 @@ const ChatControl = () => {
       const { error } = await supabase
         .from("chats")
         .update({ 
-          active_responder: newMode,
-          last_updated: new Date().toISOString()
+          active_responder: newMode
         })
         .eq("chat_id", chat.chat_id);
 
@@ -239,7 +238,7 @@ const ChatControl = () => {
       // Update chat to ADMIN_CONTROLLED mode
       await supabase
         .from("chats")
-        .update({ active_responder: "ADMIN_CONTROLLED", last_updated: new Date().toISOString() })
+        .update({ active_responder: "ADMIN_CONTROLLED" })
         .eq("chat_id", selectedChat.chat_id);
 
       setNewMessage("");
