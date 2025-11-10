@@ -66,7 +66,8 @@ const OffersManagement = () => {
     } else {
       const { error } = await supabase.from("offers").insert(offerData);
       if (error) {
-        toast({ title: "Error creating offer", variant: "destructive" });
+        console.error("Insert error:", error);
+        toast({ title: "Error creating offer", description: error.message, variant: "destructive" });
       } else {
         toast({ title: "Offer created successfully" });
       }

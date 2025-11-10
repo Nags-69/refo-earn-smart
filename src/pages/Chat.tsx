@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Send } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
+import { streamAIChat } from "@/utils/aiChat";
+import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   role: "user" | "assistant";
@@ -21,15 +22,98 @@ const Chat = () => {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [chatId, setChatId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => {
+    initChat();
+    
+    // Subscribe to messages for this chat
+    const channel = supabase
+      .channel('chat-messages')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: chatId ? `chat_id=eq.${chatId}` : undefined
+        },
+        (payload) => {
+          const newMsg = payload.new as any;
+          if (newMsg.sender === "admin") {
+            setMessages(prev => [...prev, { 
+              role: "assistant", 
+              content: newMsg.message 
+            }]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [chatId]);
+
+  const initChat = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Check for existing chat
+    const { data: existingChat } = await supabase
+      .from("chats")
+      .select("chat_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (existingChat) {
+      setChatId(existingChat.chat_id);
+      
+      // Load existing messages
+      const { data: chatMessages } = await supabase
+        .from("chat_messages")
+        .select("*")
+        .eq("chat_id", existingChat.chat_id)
+        .order("timestamp", { ascending: true });
+
+      if (chatMessages && chatMessages.length > 0) {
+        const formattedMessages = chatMessages.map(msg => ({
+          role: msg.sender === "user" ? "user" as const : "assistant" as const,
+          content: msg.message
+        }));
+        setMessages(formattedMessages);
+      }
+    } else {
+      // Create new chat
+      const { data: newChat } = await supabase
+        .from("chats")
+        .insert({ user_id: user.id, active_responder: "AI" })
+        .select("chat_id")
+        .single();
+
+      if (newChat) {
+        setChatId(newChat.chat_id);
+      }
+    }
+  };
+
+  const saveMessage = async (role: "user" | "admin", content: string) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user || !chatId) return;
+
+    await supabase.from("chat_messages").insert({
+      chat_id: chatId,
+      user_id: user.id,
+      sender: role,
+      message: content,
+      responder_mode: role === "user" ? "USER" : "AI"
+    });
   };
 
   const sendMessage = async () => {
@@ -37,18 +121,61 @@ const Chat = () => {
 
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
+    await saveMessage("user", input);
     setInput("");
     setLoading(true);
 
-    // Simulate AI response (replace with actual Gemini integration later)
-    setTimeout(() => {
-      const assistantMessage: Message = {
-        role: "assistant",
-        content: "I'm here to help with app-related questions. This feature will be fully powered by Gemini AI soon!",
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+    // Check chat mode
+    const { data: chat } = await supabase
+      .from("chats")
+      .select("active_responder")
+      .eq("chat_id", chatId)
+      .single();
+
+    if (chat?.active_responder === "ADMIN_CONTROLLED") {
       setLoading(false);
-    }, 1000);
+      toast({ 
+        title: "Message sent", 
+        description: "An admin will respond shortly" 
+      });
+      return;
+    }
+
+    let assistantContent = "";
+    const upsertAssistant = (chunk: string) => {
+      assistantContent += chunk;
+      setMessages(prev => {
+        const last = prev[prev.length - 1];
+        if (last?.role === "assistant") {
+          return prev.map((m, i) => 
+            i === prev.length - 1 ? { ...m, content: assistantContent } : m
+          );
+        }
+        return [...prev, { role: "assistant", content: assistantContent }];
+      });
+    };
+
+    try {
+      await streamAIChat({
+        messages: [...messages, userMessage],
+        onDelta: (chunk) => upsertAssistant(chunk),
+        onDone: async () => {
+          setLoading(false);
+          await saveMessage("admin", assistantContent);
+        },
+        onError: (error) => {
+          setLoading(false);
+          toast({ title: "Error", description: error, variant: "destructive" });
+        }
+      });
+    } catch (e) {
+      setLoading(false);
+      console.error(e);
+    }
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
   return (
