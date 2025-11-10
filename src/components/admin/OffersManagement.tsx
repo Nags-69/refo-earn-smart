@@ -2,11 +2,13 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Edit, Trash2 } from "lucide-react";
+import { Plus, Edit, Trash2, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 type Offer = {
@@ -17,12 +19,23 @@ type Offer = {
   logo_url: string;
   category: string;
   status: string;
+  play_store_url: string;
+  instructions: string[];
+};
+
+type Category = {
+  id: string;
+  name: string;
 };
 
 const OffersManagement = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   const [editingOffer, setEditingOffer] = useState<Offer | null>(null);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [instructions, setInstructions] = useState<string[]>([""]);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -30,12 +43,14 @@ const OffersManagement = () => {
     description: "",
     reward: "",
     logo_url: "",
+    play_store_url: "",
     category: "",
     status: "active",
   });
 
   useEffect(() => {
     fetchOffers();
+    fetchCategories();
   }, []);
 
   const fetchOffers = async () => {
@@ -43,16 +58,25 @@ const OffersManagement = () => {
     if (data) setOffers(data);
   };
 
+  const fetchCategories = async () => {
+    const { data } = await supabase.from("categories").select("*").order("name");
+    if (data) setCategories(data);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const filteredInstructions = instructions.filter(i => i.trim() !== "");
+    
     const offerData = {
       title: formData.title,
       description: formData.description,
       reward: parseFloat(formData.reward),
       logo_url: formData.logo_url,
+      play_store_url: formData.play_store_url,
       category: formData.category,
       status: formData.status,
+      instructions: filteredInstructions,
       is_public: true,
     };
 
@@ -95,9 +119,11 @@ const OffersManagement = () => {
       description: offer.description || "",
       reward: offer.reward.toString(),
       logo_url: offer.logo_url || "",
+      play_store_url: offer.play_store_url || "",
       category: offer.category || "",
       status: offer.status || "active",
     });
+    setInstructions(offer.instructions && offer.instructions.length > 0 ? offer.instructions : [""]);
     setIsDialogOpen(true);
   };
 
@@ -108,23 +134,106 @@ const OffersManagement = () => {
       description: "",
       reward: "",
       logo_url: "",
+      play_store_url: "",
       category: "",
       status: "active",
     });
+    setInstructions([""]);
+  };
+
+  const addInstruction = () => {
+    setInstructions([...instructions, ""]);
+  };
+
+  const removeInstruction = (index: number) => {
+    setInstructions(instructions.filter((_, i) => i !== index));
+  };
+
+  const updateInstruction = (index: number, value: string) => {
+    const newInstructions = [...instructions];
+    newInstructions[index] = value;
+    setInstructions(newInstructions);
+  };
+
+  const handleAddCategory = async () => {
+    if (!newCategoryName.trim()) {
+      toast({ title: "Category name is required", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("categories").insert({ name: newCategoryName.trim() });
+    
+    if (error) {
+      toast({ title: "Error adding category", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Category added successfully" });
+      setNewCategoryName("");
+      setIsCategoryDialogOpen(false);
+      fetchCategories();
+    }
+  };
+
+  const handleDeleteCategory = async (id: string) => {
+    const { error } = await supabase.from("categories").delete().eq("id", id);
+    
+    if (error) {
+      toast({ title: "Error deleting category", variant: "destructive" });
+    } else {
+      toast({ title: "Category deleted successfully" });
+      fetchCategories();
+    }
   };
 
   return (
-    <div>
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
         <h2 className="text-3xl font-bold">Offers Management</h2>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={resetForm}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Offer
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-md">
+        <div className="flex gap-2">
+          <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline">
+                <Plus className="h-4 w-4 mr-2" />
+                Manage Categories
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Manage Categories</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="New category name"
+                    value={newCategoryName}
+                    onChange={(e) => setNewCategoryName(e.target.value)}
+                  />
+                  <Button onClick={handleAddCategory}>Add</Button>
+                </div>
+                <div className="space-y-2">
+                  {categories.map((category) => (
+                    <div key={category.id} className="flex justify-between items-center p-2 border rounded">
+                      <span>{category.name}</span>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeleteCategory(category.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={resetForm}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Offer
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingOffer ? "Edit Offer" : "Add New Offer"}</DialogTitle>
             </DialogHeader>
@@ -166,24 +275,81 @@ const OffersManagement = () => {
                 />
               </div>
               <div>
-                <Label htmlFor="category">Category</Label>
+                <Label htmlFor="play_store_url">App Download URL (Play Store)</Label>
                 <Input
-                  id="category"
-                  value={formData.category}
-                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  id="play_store_url"
+                  placeholder="https://play.google.com/store/apps/..."
+                  value={formData.play_store_url}
+                  onChange={(e) => setFormData({ ...formData, play_store_url: e.target.value })}
+                  required
                 />
               </div>
               <div>
-                <Label htmlFor="status">Status</Label>
-                <select
-                  id="status"
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                  className="w-full h-10 px-3 rounded-md border border-input bg-background"
+                <Label htmlFor="category">Category</Label>
+                <Select
+                  value={formData.category}
+                  onValueChange={(value) => setFormData({ ...formData, category: value })}
                 >
-                  <option value="active">Active</option>
-                  <option value="inactive">Inactive</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) => (
+                      <SelectItem key={category.id} value={category.name}>
+                        {category.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Instructions (shown to user)</Label>
+                <div className="space-y-2">
+                  {instructions.map((instruction, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Textarea
+                        placeholder={`Step ${index + 1}`}
+                        value={instruction}
+                        onChange={(e) => updateInstruction(index, e.target.value)}
+                        className="min-h-[60px]"
+                      />
+                      {instructions.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeInstruction(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={addInstruction}
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add Instruction
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="status">Status</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) => setFormData({ ...formData, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">Active</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <Button type="submit" className="w-full">
                 {editingOffer ? "Update Offer" : "Create Offer"}
@@ -191,6 +357,7 @@ const OffersManagement = () => {
             </form>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <Card>
