@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import BottomNav from "@/components/BottomNav";
@@ -17,6 +19,8 @@ const Dashboard = () => {
   const [offers, setOffers] = useState([]);
   const [affiliateLink, setAffiliateLink] = useState("");
   const [copied, setCopied] = useState(false);
+  const [selectedOffer, setSelectedOffer] = useState<any>(null);
+  const [agreedToInstructions, setAgreedToInstructions] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -63,15 +67,20 @@ const Dashboard = () => {
     }
   };
 
-  const handleStartTask = async (offerId: string) => {
-    if (!user) return;
+  const handleOfferClick = (offer: any) => {
+    setSelectedOffer(offer);
+    setAgreedToInstructions(false);
+  };
+
+  const handleContinue = async () => {
+    if (!user || !selectedOffer) return;
 
     // Check if task already exists
     const { data: existingTask } = await supabase
       .from("tasks")
       .select("id")
       .eq("user_id", user.id)
-      .eq("offer_id", offerId)
+      .eq("offer_id", selectedOffer.id)
       .maybeSingle();
 
     if (existingTask) {
@@ -80,6 +89,7 @@ const Dashboard = () => {
         description: "You already have this task in your tasks list",
         variant: "destructive",
       });
+      setSelectedOffer(null);
       return;
     }
 
@@ -88,7 +98,7 @@ const Dashboard = () => {
       .from("tasks")
       .insert({
         user_id: user.id,
-        offer_id: offerId,
+        offer_id: selectedOffer.id,
         status: "pending",
       });
 
@@ -103,9 +113,15 @@ const Dashboard = () => {
 
     toast({
       title: "Task started!",
-      description: "Check 'My Tasks' tab to view and complete it",
+      description: "Redirecting to app download...",
     });
 
+    // Redirect to Play Store
+    if (selectedOffer.play_store_url) {
+      window.open(selectedOffer.play_store_url, '_blank');
+    }
+
+    setSelectedOffer(null);
     loadDashboardData(user.id);
   };
 
@@ -177,7 +193,7 @@ const Dashboard = () => {
                     logoUrl={offer.logo_url}
                     category={offer.category}
                     status={offer.status}
-                    onStartTask={() => handleStartTask(offer.id)}
+                    onStartTask={() => handleOfferClick(offer)}
                   />
                 ))}
               </div>
@@ -255,6 +271,73 @@ const Dashboard = () => {
       </div>
 
       <BottomNav />
+
+      {/* Instructions Dialog */}
+      <Dialog open={!!selectedOffer} onOpenChange={() => setSelectedOffer(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-heading">{selectedOffer?.title}</DialogTitle>
+            <DialogDescription>Complete the following steps to earn ₹{selectedOffer?.reward}</DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <h4 className="font-semibold mb-3">Instructions:</h4>
+              <ul className="space-y-2">
+                {selectedOffer?.instructions && selectedOffer.instructions.length > 0 ? (
+                  selectedOffer.instructions.map((instruction: string, index: number) => (
+                    <li key={index} className="flex gap-2 text-sm text-muted-foreground">
+                      <span className="text-primary font-semibold">{index + 1}.</span>
+                      <span>{instruction}</span>
+                    </li>
+                  ))
+                ) : (
+                  <>
+                    <li className="flex gap-2 text-sm text-muted-foreground">
+                      <span className="text-primary font-semibold">1.</span>
+                      <span>Download and install the app from Play Store</span>
+                    </li>
+                    <li className="flex gap-2 text-sm text-muted-foreground">
+                      <span className="text-primary font-semibold">2.</span>
+                      <span>Complete the required action as specified</span>
+                    </li>
+                    <li className="flex gap-2 text-sm text-muted-foreground">
+                      <span className="text-primary font-semibold">3.</span>
+                      <span>Take a screenshot as proof of completion</span>
+                    </li>
+                    <li className="flex gap-2 text-sm text-muted-foreground">
+                      <span className="text-primary font-semibold">4.</span>
+                      <span>Upload the proof in 'My Tasks' tab</span>
+                    </li>
+                  </>
+                )}
+              </ul>
+            </div>
+
+            <div className="flex items-start gap-3 p-4 bg-secondary/50 rounded-lg">
+              <Checkbox 
+                id="agree" 
+                checked={agreedToInstructions}
+                onCheckedChange={(checked) => setAgreedToInstructions(checked as boolean)}
+              />
+              <label 
+                htmlFor="agree" 
+                className="text-sm cursor-pointer leading-tight"
+              >
+                I agree with the instructions and will complete the task as specified
+              </label>
+            </div>
+
+            <Button 
+              className="w-full" 
+              disabled={!agreedToInstructions}
+              onClick={handleContinue}
+            >
+              Continue to Download
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

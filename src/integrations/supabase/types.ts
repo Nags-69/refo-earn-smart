@@ -109,8 +109,10 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          instructions: string[] | null
           is_public: boolean | null
           logo_url: string | null
+          play_store_url: string | null
           reward: number
           status: string | null
           title: string
@@ -120,8 +122,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          instructions?: string[] | null
           is_public?: boolean | null
           logo_url?: string | null
+          play_store_url?: string | null
           reward: number
           status?: string | null
           title: string
@@ -131,8 +135,10 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          instructions?: string[] | null
           is_public?: boolean | null
           logo_url?: string | null
+          play_store_url?: string | null
           reward?: number
           status?: string | null
           title?: string
