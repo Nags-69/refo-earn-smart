@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { LayoutDashboard, Package, Users, CreditCard, MessageSquare, Settings, Link2 } from "lucide-react";
+import { LayoutDashboard, Package, Users, CreditCard, MessageSquare, Settings, Link2, UserCog } from "lucide-react";
 import Overview from "@/components/admin/Overview";
 import OffersManagement from "@/components/admin/OffersManagement";
 import ReferralsManagement from "@/components/admin/ReferralsManagement";
@@ -7,14 +7,16 @@ import PayoutsManagement from "@/components/admin/PayoutsManagement";
 import ChatControl from "@/components/admin/ChatControl";
 import AdminSettings from "@/components/admin/AdminSettings";
 import AffiliatesManagement from "@/components/admin/AffiliatesManagement";
+import UsersManagement from "@/components/admin/UsersManagement";
 
-type AdminSection = "overview" | "offers" | "referrals" | "payouts" | "chat" | "affiliates" | "settings";
+type AdminSection = "overview" | "offers" | "referrals" | "payouts" | "chat" | "affiliates" | "users" | "settings";
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
 
   const sections = [
     { id: "overview" as AdminSection, label: "Overview", icon: LayoutDashboard },
+    { id: "users" as AdminSection, label: "Users", icon: UserCog },
     { id: "offers" as AdminSection, label: "Offers", icon: Package },
     { id: "referrals" as AdminSection, label: "Referrals", icon: Users },
     { id: "payouts" as AdminSection, label: "Payouts", icon: CreditCard },
@@ -27,6 +29,8 @@ const Admin = () => {
     switch (activeSection) {
       case "overview":
         return <Overview />;
+      case "users":
+        return <UsersManagement />;
       case "offers":
         return <OffersManagement />;
       case "referrals":

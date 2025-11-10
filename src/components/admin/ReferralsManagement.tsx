@@ -25,29 +25,35 @@ const ReferralsManagement = () => {
   }, []);
 
   const fetchTasks = async () => {
-    const { data: tasksData } = await supabase
+    const { data: tasksData, error } = await supabase
       .from("tasks")
       .select("*")
       .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching tasks:", error);
+      toast({ title: "Error loading tasks", variant: "destructive" });
+      return;
+    }
 
     if (tasksData) {
       const tasksWithDetails = await Promise.all(
         tasksData.map(async (task) => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("email")
+            .select("email, username")
             .eq("id", task.user_id)
-            .single();
+            .maybeSingle();
           
           const { data: offer } = await supabase
             .from("offers")
             .select("title, reward")
             .eq("id", task.offer_id)
-            .single();
+            .maybeSingle();
 
           return {
             ...task,
-            user_email: profile?.email || "N/A",
+            user_email: profile?.username || profile?.email || "N/A",
             offer_title: offer?.title || "N/A",
             offer_reward: offer?.reward || 0,
           };

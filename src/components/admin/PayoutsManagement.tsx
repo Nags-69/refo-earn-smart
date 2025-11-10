@@ -22,16 +22,22 @@ const PayoutsManagement = () => {
   }, []);
 
   const fetchPayouts = async () => {
-    const { data: wallets } = await supabase.from("wallet").select("*");
+    const { data: wallets, error } = await supabase.from("wallet").select("*");
+
+    if (error) {
+      console.error("Error fetching wallets:", error);
+      toast({ title: "Error loading payouts", variant: "destructive" });
+      return;
+    }
 
     if (wallets) {
       const payoutsWithDetails = await Promise.all(
         wallets.map(async (wallet) => {
           const { data: profile } = await supabase
             .from("profiles")
-            .select("email")
+            .select("email, username")
             .eq("id", wallet.user_id)
-            .single();
+            .maybeSingle();
 
           const { data: transactions } = await supabase
             .from("transactions")
@@ -46,9 +52,9 @@ const PayoutsManagement = () => {
 
           return {
             user_id: wallet.user_id,
-            user_email: profile?.email || "N/A",
-            total_earnings: Number(wallet.total_balance),
-            pending_balance: Number(wallet.pending_balance),
+            user_email: profile?.username || profile?.email || "N/A",
+            total_earnings: Number(wallet.total_balance || 0),
+            pending_balance: Number(wallet.pending_balance || 0),
             completed_payouts: completedPayouts,
           };
         })
