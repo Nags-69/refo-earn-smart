@@ -73,21 +73,27 @@ const Chat = () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Check for existing chat
-    const { data: existingChat } = await supabase
+    // Always reuse the latest chat for this user (avoid duplicates)
+    const { data: chatsList, error: chatsErr } = await supabase
       .from("chats")
       .select("chat_id")
       .eq("user_id", user.id)
-      .maybeSingle();
+      .order("last_updated", { ascending: false })
+      .limit(1);
 
-    if (existingChat) {
-      setChatId(existingChat.chat_id);
+    if (chatsErr) {
+      console.error("Load chats error:", chatsErr);
+    }
+
+    if (chatsList && chatsList.length > 0) {
+      const current = chatsList[0];
+      setChatId(current.chat_id);
       
       // Load existing messages
       const { data: chatMessages } = await supabase
         .from("chat_messages")
         .select("*")
-        .eq("chat_id", existingChat.chat_id)
+        .eq("chat_id", current.chat_id)
         .order("timestamp", { ascending: true });
 
       if (chatMessages && chatMessages.length > 0) {
