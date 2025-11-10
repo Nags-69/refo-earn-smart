@@ -8,11 +8,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import BottomNav from "@/components/BottomNav";
+import OfferCard from "@/components/OfferCard";
 
 const Dashboard = () => {
   const { user } = useAuth();
   const [wallet, setWallet] = useState<any>(null);
   const [tasks, setTasks] = useState([]);
+  const [offers, setOffers] = useState([]);
   const [affiliateLink, setAffiliateLink] = useState("");
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
@@ -40,6 +42,15 @@ const Dashboard = () => {
       .order("created_at", { ascending: false });
     setTasks(tasksData || []);
 
+    // Load available offers
+    const { data: offersData } = await supabase
+      .from("offers")
+      .select("*")
+      .eq("is_public", true)
+      .eq("status", "active")
+      .order("created_at", { ascending: false });
+    setOffers(offersData || []);
+
     // Load affiliate link
     const { data: affiliateData } = await supabase
       .from("affiliate_links")
@@ -50,6 +61,52 @@ const Dashboard = () => {
     if (affiliateData) {
       setAffiliateLink(`${window.location.origin}/?partner=${affiliateData.unique_code}`);
     }
+  };
+
+  const handleStartTask = async (offerId: string) => {
+    if (!user) return;
+
+    // Check if task already exists
+    const { data: existingTask } = await supabase
+      .from("tasks")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("offer_id", offerId)
+      .maybeSingle();
+
+    if (existingTask) {
+      toast({
+        title: "Task already started",
+        description: "You already have this task in your tasks list",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Create new task
+    const { error } = await supabase
+      .from("tasks")
+      .insert({
+        user_id: user.id,
+        offer_id: offerId,
+        status: "pending",
+      });
+
+    if (error) {
+      toast({
+        title: "Failed to start task",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Task started!",
+      description: "Check 'My Tasks' tab to view and complete it",
+    });
+
+    loadDashboardData(user.id);
   };
 
   const copyToClipboard = () => {
@@ -101,11 +158,37 @@ const Dashboard = () => {
           </div>
         </div>
 
-        <Tabs defaultValue="tasks" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+        <Tabs defaultValue="offers" className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-6">
+            <TabsTrigger value="offers">Offers</TabsTrigger>
             <TabsTrigger value="tasks">My Tasks</TabsTrigger>
             <TabsTrigger value="affiliate">Affiliate</TabsTrigger>
           </TabsList>
+
+          <TabsContent value="offers" className="space-y-4">
+            {offers.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {offers.map((offer: any) => (
+                  <OfferCard
+                    key={offer.id}
+                    title={offer.title}
+                    description={offer.description}
+                    reward={offer.reward}
+                    logoUrl={offer.logo_url}
+                    category={offer.category}
+                    status={offer.status}
+                    onStartTask={() => handleStartTask(offer.id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <Card className="p-8 text-center">
+                <p className="text-muted-foreground">
+                  No offers available at the moment
+                </p>
+              </Card>
+            )}
+          </TabsContent>
 
           <TabsContent value="tasks" className="space-y-4">
             {tasks.length > 0 ? (
