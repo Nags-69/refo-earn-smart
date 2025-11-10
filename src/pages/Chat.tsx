@@ -24,6 +24,8 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [chatId, setChatId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const lastUserMsgRef = useRef<string | null>(null);
+  const userIdRef = useRef<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -37,9 +39,8 @@ const Chat = () => {
   useEffect(() => {
     if (!chatId) return;
     
-    // Subscribe to messages for this chat
     const channel = supabase
-      .channel('chat-messages')
+      .channel(`chat-messages-${chatId}`)
       .on(
         'postgres_changes',
         {
@@ -50,16 +51,18 @@ const Chat = () => {
         },
         (payload) => {
           const newMsg = payload.new as any;
-          // Don't add if it's our own message (already in state)
-          const isOwnMessage = newMsg.sender === "user" && 
-                               messages.some(m => m.content === newMsg.message && m.role === "user");
-          
-          if (!isOwnMessage) {
-            setMessages(prev => [...prev, { 
-              role: newMsg.sender === "user" ? "user" : "assistant", 
-              content: newMsg.message 
-            }]);
+          // Ignore echo of our just-sent user message
+          if (
+            newMsg.user_id === userIdRef.current &&
+            newMsg.sender === 'user' &&
+            newMsg.message === lastUserMsgRef.current
+          ) {
+            return;
           }
+          setMessages((prev) => [
+            ...prev,
+            { role: newMsg.sender === 'user' ? 'user' : 'assistant', content: newMsg.message },
+          ]);
         }
       )
       .subscribe();
@@ -67,11 +70,12 @@ const Chat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [chatId, messages]);
+  }, [chatId]);
 
   const initChat = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
+    userIdRef.current = user.id;
 
     // Always reuse the latest chat for this user (avoid duplicates)
     const { data: chatsList, error: chatsErr } = await supabase
@@ -135,6 +139,7 @@ const Chat = () => {
 
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
+    lastUserMsgRef.current = input;
     await saveMessage("user", input);
     setInput("");
     setLoading(true);
