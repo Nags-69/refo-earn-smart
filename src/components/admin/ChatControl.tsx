@@ -53,28 +53,41 @@ const ChatControl = () => {
       )
       .subscribe();
 
-    // Set up real-time subscription for messages
-    const messagesChannel = supabase
-      .channel('messages-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'chat_messages'
-        },
-        (payload) => {
-          if (selectedChat && payload.new && (payload.new as any).chat_id === selectedChat.chat_id) {
-            fetchMessages(selectedChat.chat_id);
+    // Set up real-time subscription for messages (scoped to selected chat)
+    let messagesChannel: ReturnType<typeof supabase.channel> | null = null;
+    if (selectedChat?.chat_id) {
+      messagesChannel = supabase
+        .channel(`messages-${selectedChat.chat_id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'chat_messages',
+            filter: `chat_id=eq.${selectedChat.chat_id}`
+          },
+          (payload) => {
+            const newMsg = payload.new as any;
+            // Optimistically append without refetch for snappier UI
+            setMessages((prev) => [
+              ...prev,
+              {
+                id: newMsg.id,
+                sender: newMsg.sender,
+                message: newMsg.message,
+                timestamp: newMsg.timestamp,
+              },
+            ]);
+            // Also refresh chats list (for counts/last_updated)
+            fetchChats();
           }
-          fetchChats();
-        }
-      )
-      .subscribe();
+        )
+        .subscribe();
+    }
 
     return () => {
       supabase.removeChannel(chatsChannel);
-      supabase.removeChannel(messagesChannel);
+      if (messagesChannel) supabase.removeChannel(messagesChannel);
     };
   }, [selectedChat]);
 
