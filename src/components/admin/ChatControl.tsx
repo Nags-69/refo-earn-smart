@@ -237,16 +237,19 @@ const ChatControl = () => {
     }
 
     try {
+      console.log('Clearing chat:', chat.chat_id);
       const { error } = await supabase
         .from("chat_messages")
         .delete()
         .eq("chat_id", chat.chat_id);
 
       if (error) {
-        toast({ title: "Failed to clear chat", variant: "destructive" });
+        console.error('Delete error:', error);
+        toast({ title: "Failed to clear chat", description: error.message, variant: "destructive" });
         return;
       }
 
+      console.log('Chat cleared successfully');
       toast({ title: "Chat cleared successfully" });
       fetchChats();
       
@@ -263,6 +266,7 @@ const ChatControl = () => {
     if (!newMessage.trim() || !selectedChat) return;
 
     try {
+      console.log('Admin sending message to chat:', selectedChat.chat_id);
       const { error } = await supabase.from("chat_messages").insert({
         chat_id: selectedChat.chat_id,
         user_id: selectedChat.user_id,
@@ -272,9 +276,12 @@ const ChatControl = () => {
       });
 
       if (error) {
-        toast({ title: "Send failed", variant: "destructive" });
+        console.error('Message send error:', error);
+        toast({ title: "Send failed", description: error.message, variant: "destructive" });
         return;
       }
+
+      console.log('Admin message sent successfully');
 
       // Update chat to ADMIN_CONTROLLED mode
       await supabase

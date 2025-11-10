@@ -117,7 +117,7 @@ const RefoAI = () => {
   useEffect(() => {
     if (!chatId || !isOpen) return;
     
-    console.log('Setting up realtime for chat:', chatId);
+    console.log('RefoAI: Setting up realtime for chat:', chatId);
     const channel = supabase
       .channel(`refo-ai-messages-${chatId}`)
       .on(
@@ -130,22 +130,27 @@ const RefoAI = () => {
         },
         (payload) => {
           const newMsg = payload.new as any;
-          console.log('RefoAI received message:', newMsg);
+          console.log('RefoAI: Received message:', newMsg);
           
           // Only add messages from admin (assistant) in realtime
           // User messages are added optimistically before sending
           if (newMsg.sender === 'admin' || newMsg.sender === 'assistant') {
+            console.log('RefoAI: Adding admin/assistant message to UI');
             setMessages((prev) => [
               ...prev,
               { role: 'assistant', content: newMsg.message },
             ]);
+          } else {
+            console.log('RefoAI: Skipping user message (already in UI)');
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('RefoAI: Subscription status:', status);
+      });
 
     return () => {
-      console.log('Cleaning up realtime subscription');
+      console.log('RefoAI: Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [chatId, isOpen]);

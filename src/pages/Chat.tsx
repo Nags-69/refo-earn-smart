@@ -39,6 +39,7 @@ const Chat = () => {
   useEffect(() => {
     if (!chatId) return;
     
+    console.log('Chat.tsx: Setting up realtime for chat:', chatId);
     const channel = supabase
       .channel(`chat-messages-${chatId}`)
       .on(
@@ -51,7 +52,7 @@ const Chat = () => {
         },
         (payload) => {
           const newMsg = payload.new as any;
-          console.log('Realtime message received:', newMsg);
+          console.log('Chat.tsx: Realtime message received:', newMsg);
           
           // Only skip if it's our own user message that we just added to UI
           if (
@@ -59,11 +60,13 @@ const Chat = () => {
             newMsg.sender === 'user' &&
             newMsg.message === lastUserMsgRef.current
           ) {
+            console.log('Chat.tsx: Skipping echo of user message');
             // Clear the ref after using it once
             lastUserMsgRef.current = null;
             return;
           }
           
+          console.log('Chat.tsx: Adding message to UI');
           // Add all other messages (including admin replies)
           setMessages((prev) => [
             ...prev,
@@ -71,9 +74,12 @@ const Chat = () => {
           ]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('Chat.tsx: Subscription status:', status);
+      });
 
     return () => {
+      console.log('Chat.tsx: Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
   }, [chatId]);
