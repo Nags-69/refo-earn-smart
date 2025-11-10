@@ -22,23 +22,29 @@ const RefoAI = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [chatId, setChatId] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
-
-  // Use a valid demo UUID instead of "demo-user" string
-  const DEMO_USER_ID = "00000000-0000-0000-0000-000000000001";
 
   // Initialize or fetch existing chat
   useEffect(() => {
     const initializeChat = async () => {
       try {
+        // Get authenticated user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          console.log("User not authenticated");
+          return;
+        }
+        
+        setUserId(user.id);
 
         // Check if user has existing chat
         const { data: existingChat, error: fetchError } = await supabase
           .from("chats")
           .select("*")
-          .eq("user_id", DEMO_USER_ID)
+          .eq("user_id", user.id)
           .order("last_updated", { ascending: false })
           .limit(1)
           .maybeSingle();
@@ -70,7 +76,7 @@ const RefoAI = () => {
           // Create new chat
           const { data: newChat, error: createError } = await supabase
             .from("chats")
-            .insert({ user_id: DEMO_USER_ID, active_responder: "AI" })
+            .insert({ user_id: user.id, active_responder: "AI" })
             .select()
             .single();
 
@@ -80,7 +86,7 @@ const RefoAI = () => {
             // Add welcome message
             const welcomeMsg = {
               chat_id: newChat.chat_id,
-              user_id: DEMO_USER_ID,
+              user_id: user.id,
               sender: "assistant",
               message:
                 "Hi! I'm Refo AI. I can help you with offers, payouts, verification, and affiliate questions. How can I assist you today?",
@@ -184,7 +190,7 @@ const RefoAI = () => {
   }, [isDragging]);
 
   const sendMessage = async () => {
-    if (!input.trim() || !chatId) return;
+    if (!input.trim() || !chatId || !userId) return;
 
     const userMessageText = input.trim();
 
@@ -200,19 +206,21 @@ const RefoAI = () => {
         .eq("chat_id", chatId)
         .single();
 
-      const responderMode = chat?.active_responder || "AI";
+      const activeResponder = chat?.active_responder || "AI";
+      // Map active_responder to valid responder_mode values
+      const responderMode = activeResponder === "ADMIN_CONTROLLED" ? "ADMIN" : "AI";
 
       // Save user message to database
       await supabase.from("chat_messages").insert({
         chat_id: chatId,
-        user_id: DEMO_USER_ID,
+        user_id: userId,
         sender: "user",
         message: userMessageText,
         responder_mode: responderMode,
       });
 
-      // Only generate AI response if not in ADMIN mode
-      if (responderMode === "AI") {
+      // Only generate AI response if not in ADMIN_CONTROLLED mode
+      if (activeResponder === "AI") {
         setIsTyping(true);
 
         let assistantContent = "";
@@ -240,7 +248,7 @@ const RefoAI = () => {
             try {
               await supabase.from("chat_messages").insert({
                 chat_id: chatId,
-                user_id: DEMO_USER_ID,
+                user_id: userId,
                 sender: "assistant",
                 message: assistantContent,
                 responder_mode: "AI",

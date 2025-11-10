@@ -130,7 +130,7 @@ const Chat = () => {
       user_id: user.id,
       sender: role,
       message: content,
-      responder_mode: role === "user" ? "USER" : "AI"
+      responder_mode: role === "admin" ? "ADMIN" : "AI"
     });
   };
 
