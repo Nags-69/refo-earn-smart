@@ -231,6 +231,34 @@ const ChatControl = () => {
     }
   };
 
+  const handleClearChat = async (chat: Chat) => {
+    if (!confirm(`Are you sure you want to clear all messages for ${chat.user_email}?`)) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from("chat_messages")
+        .delete()
+        .eq("chat_id", chat.chat_id);
+
+      if (error) {
+        toast({ title: "Failed to clear chat", variant: "destructive" });
+        return;
+      }
+
+      toast({ title: "Chat cleared successfully" });
+      fetchChats();
+      
+      if (selectedChat?.chat_id === chat.chat_id) {
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error("Error clearing chat:", error);
+      toast({ title: "Connection error", variant: "destructive" });
+    }
+  };
+
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !selectedChat) return;
 
@@ -255,8 +283,6 @@ const ChatControl = () => {
         .eq("chat_id", selectedChat.chat_id);
 
       setNewMessage("");
-      fetchMessages(selectedChat.chat_id);
-      fetchChats();
 
       toast({ title: "Message sent as Refo Assistant" });
     } catch (error) {
@@ -350,6 +376,14 @@ const ChatControl = () => {
                             }
                           >
                             {chat.active_responder === "AI" ? "Take Over" : "Resume AI"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleClearChat(chat)}
+                            className="hover:bg-destructive/10 hover:text-destructive"
+                          >
+                            Clear
                           </Button>
                         </div>
                       </TableCell>

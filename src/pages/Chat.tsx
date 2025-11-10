@@ -51,14 +51,20 @@ const Chat = () => {
         },
         (payload) => {
           const newMsg = payload.new as any;
-          // Ignore echo of our just-sent user message
+          console.log('Realtime message received:', newMsg);
+          
+          // Only skip if it's our own user message that we just added to UI
           if (
             newMsg.user_id === userIdRef.current &&
             newMsg.sender === 'user' &&
             newMsg.message === lastUserMsgRef.current
           ) {
+            // Clear the ref after using it once
+            lastUserMsgRef.current = null;
             return;
           }
+          
+          // Add all other messages (including admin replies)
           setMessages((prev) => [
             ...prev,
             { role: newMsg.sender === 'user' ? 'user' : 'assistant', content: newMsg.message },

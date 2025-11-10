@@ -113,6 +113,43 @@ const RefoAI = () => {
     }
   }, [isOpen]);
 
+  // Realtime subscription for new messages
+  useEffect(() => {
+    if (!chatId || !isOpen) return;
+    
+    console.log('Setting up realtime for chat:', chatId);
+    const channel = supabase
+      .channel(`refo-ai-messages-${chatId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `chat_id=eq.${chatId}`
+        },
+        (payload) => {
+          const newMsg = payload.new as any;
+          console.log('RefoAI received message:', newMsg);
+          
+          // Only add messages from admin (assistant) in realtime
+          // User messages are added optimistically before sending
+          if (newMsg.sender === 'admin' || newMsg.sender === 'assistant') {
+            setMessages((prev) => [
+              ...prev,
+              { role: 'assistant', content: newMsg.message },
+            ]);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      console.log('Cleaning up realtime subscription');
+      supabase.removeChannel(channel);
+    };
+  }, [chatId, isOpen]);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
