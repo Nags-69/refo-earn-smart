@@ -21,10 +21,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, currentSession) => {
+      (_event, currentSession) => {
         setSession(currentSession);
         setUser(currentSession?.user ?? null);
-        setIsLoading(false);
+        // Note: Do not set isLoading here to avoid flashing the auth modal
+        // while the initial session restore is still in progress.
       }
     );
 
@@ -37,7 +38,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return () => subscription.unsubscribe();
   }, []);
-
   const signOut = async () => {
     await supabase.auth.signOut();
     navigate("/");
