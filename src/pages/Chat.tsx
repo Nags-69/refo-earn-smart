@@ -32,6 +32,10 @@ const Chat = () => {
 
   useEffect(() => {
     initChat();
+  }, []);
+
+  useEffect(() => {
+    if (!chatId) return;
     
     // Subscribe to messages for this chat
     const channel = supabase
@@ -42,13 +46,17 @@ const Chat = () => {
           event: 'INSERT',
           schema: 'public',
           table: 'chat_messages',
-          filter: chatId ? `chat_id=eq.${chatId}` : undefined
+          filter: `chat_id=eq.${chatId}`
         },
         (payload) => {
           const newMsg = payload.new as any;
-          if (newMsg.sender === "admin") {
+          // Don't add if it's our own message (already in state)
+          const isOwnMessage = newMsg.sender === "user" && 
+                               messages.some(m => m.content === newMsg.message && m.role === "user");
+          
+          if (!isOwnMessage) {
             setMessages(prev => [...prev, { 
-              role: "assistant", 
+              role: newMsg.sender === "user" ? "user" : "assistant", 
               content: newMsg.message 
             }]);
           }
@@ -59,7 +67,7 @@ const Chat = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [chatId]);
+  }, [chatId, messages]);
 
   const initChat = async () => {
     const { data: { user } } = await supabase.auth.getUser();
