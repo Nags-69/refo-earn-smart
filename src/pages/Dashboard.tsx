@@ -75,6 +75,15 @@ const Dashboard = () => {
   const handleContinue = async () => {
     if (!user || !selectedOffer) return;
 
+    // Store the URL before any async operations for iOS compatibility
+    const redirectUrl = selectedOffer.play_store_url;
+    
+    // Redirect immediately on iOS/Safari for better compatibility
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (isIOS && redirectUrl) {
+      window.location.href = redirectUrl;
+    }
+
     // Check if task already exists
     const { data: existingTask } = await supabase
       .from("tasks")
@@ -88,9 +97,9 @@ const Dashboard = () => {
         title: "Task already started",
         description: "Redirecting to app download...",
       });
-      // Redirect to Play Store even if task exists (allows retry)
-      if (selectedOffer.play_store_url) {
-        window.location.href = selectedOffer.play_store_url;
+      // Redirect for non-iOS devices
+      if (!isIOS && redirectUrl) {
+        window.location.href = redirectUrl;
       }
       setSelectedOffer(null);
       return;
@@ -119,9 +128,9 @@ const Dashboard = () => {
       description: "Redirecting to app download...",
     });
 
-    // Redirect to Play Store
-    if (selectedOffer.play_store_url) {
-      window.location.href = selectedOffer.play_store_url;
+    // Redirect for non-iOS devices
+    if (!isIOS && redirectUrl) {
+      window.location.href = redirectUrl;
     }
 
     setSelectedOffer(null);
