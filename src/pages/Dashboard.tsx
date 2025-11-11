@@ -86,9 +86,12 @@ const Dashboard = () => {
     if (existingTask) {
       toast({
         title: "Task already started",
-        description: "You already have this task in your tasks list",
-        variant: "destructive",
+        description: "Redirecting to app download...",
       });
+      // Redirect to Play Store even if task exists (allows retry)
+      if (selectedOffer.play_store_url) {
+        window.location.href = selectedOffer.play_store_url;
+      }
       setSelectedOffer(null);
       return;
     }
