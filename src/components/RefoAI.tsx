@@ -132,16 +132,16 @@ const RefoAI = () => {
           const newMsg = payload.new as any;
           console.log('RefoAI: Received message:', newMsg);
           
-          // Only add messages from admin (assistant) in realtime
-          // User messages are added optimistically before sending
-          if (newMsg.sender === 'admin' || newMsg.sender === 'assistant') {
-            console.log('RefoAI: Adding admin/assistant message to UI');
+          // Only add messages from admin in ADMIN_CONTROLLED mode
+          // AI messages are already added during streaming, user messages are added optimistically
+          if (newMsg.sender === 'admin' && newMsg.responder_mode === 'ADMIN') {
+            console.log('RefoAI: Adding admin message to UI');
             setMessages((prev) => [
               ...prev,
               { role: 'assistant', content: newMsg.message },
             ]);
           } else {
-            console.log('RefoAI: Skipping user message (already in UI)');
+            console.log('RefoAI: Skipping message (already in UI)');
           }
         }
       )
