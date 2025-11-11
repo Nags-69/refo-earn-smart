@@ -118,7 +118,7 @@ const Dashboard = () => {
 
     // Redirect to Play Store
     if (selectedOffer.play_store_url) {
-      window.open(selectedOffer.play_store_url, '_blank');
+      window.location.href = selectedOffer.play_store_url;
     }
 
     setSelectedOffer(null);
