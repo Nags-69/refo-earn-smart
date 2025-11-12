@@ -13,7 +13,7 @@ type Task = {
   offer_id: string;
   status: string;
   created_at: string;
-  proof_url?: string;
+  proof_url?: string[];
   user_email?: string;
   offer_title?: string;
   offer_reward?: number;
@@ -21,7 +21,8 @@ type Task = {
 
 const ReferralsManagement = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
-  const [selectedProof, setSelectedProof] = useState<string | null>(null);
+  const [selectedProofs, setSelectedProofs] = useState<string[]>([]);
+  const [currentProofIndex, setCurrentProofIndex] = useState(0);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -125,13 +126,17 @@ const ReferralsManagement = () => {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {task.proof_url ? (
+                      {task.proof_url && task.proof_url.length > 0 ? (
                         <Button
                           size="sm"
                           variant="ghost"
-                          onClick={() => setSelectedProof(task.proof_url!)}
+                          onClick={() => {
+                            setSelectedProofs(task.proof_url!);
+                            setCurrentProofIndex(0);
+                          }}
                         >
                           <Image className="h-4 w-4" />
+                          <span className="ml-1 text-xs">({task.proof_url.length})</span>
                         </Button>
                       ) : (
                         <span className="text-muted-foreground text-xs">No proof</span>
@@ -165,18 +170,48 @@ const ReferralsManagement = () => {
         </CardContent>
       </Card>
 
-      <Dialog open={!!selectedProof} onOpenChange={() => setSelectedProof(null)}>
-        <DialogContent className="max-w-3xl">
+      <Dialog open={selectedProofs.length > 0} onOpenChange={() => {
+        setSelectedProofs([]);
+        setCurrentProofIndex(0);
+      }}>
+        <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>Task Proof Screenshot</DialogTitle>
+            <DialogTitle>
+              Task Proof Screenshots ({currentProofIndex + 1} of {selectedProofs.length})
+            </DialogTitle>
           </DialogHeader>
-          <div className="flex items-center justify-center p-4">
-            {selectedProof && (
-              <img 
-                src={selectedProof} 
-                alt="Task proof" 
-                className="max-w-full max-h-[70vh] object-contain rounded-lg"
-              />
+          <div className="space-y-4">
+            <div className="flex items-center justify-center p-4">
+              {selectedProofs[currentProofIndex] && (
+                <img 
+                  src={selectedProofs[currentProofIndex]} 
+                  alt={`Task proof ${currentProofIndex + 1}`}
+                  className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                />
+              )}
+            </div>
+            {selectedProofs.length > 1 && (
+              <div className="flex items-center justify-center gap-4">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentProofIndex(Math.max(0, currentProofIndex - 1))}
+                  disabled={currentProofIndex === 0}
+                >
+                  Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  {currentProofIndex + 1} / {selectedProofs.length}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentProofIndex(Math.min(selectedProofs.length - 1, currentProofIndex + 1))}
+                  disabled={currentProofIndex === selectedProofs.length - 1}
+                >
+                  Next
+                </Button>
+              </div>
             )}
           </div>
         </DialogContent>
