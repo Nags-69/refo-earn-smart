@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Image } from "lucide-react";
 
 type Task = {
   id: string;
@@ -11,6 +13,7 @@ type Task = {
   offer_id: string;
   status: string;
   created_at: string;
+  proof_url?: string;
   user_email?: string;
   offer_title?: string;
   offer_reward?: number;
@@ -18,6 +21,7 @@ type Task = {
 
 const ReferralsManagement = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [selectedProof, setSelectedProof] = useState<string | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -94,6 +98,7 @@ const ReferralsManagement = () => {
                   <TableHead>Offer</TableHead>
                   <TableHead>Reward</TableHead>
                   <TableHead>Status</TableHead>
+                  <TableHead>Proof</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -103,11 +108,13 @@ const ReferralsManagement = () => {
                   <TableRow key={task.id}>
                     <TableCell className="font-medium">{task.user_email}</TableCell>
                     <TableCell>{task.offer_title}</TableCell>
-                    <TableCell>${task.offer_reward}</TableCell>
+                    <TableCell>₹{task.offer_reward}</TableCell>
                     <TableCell>
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
                           task.status === "completed"
+                            ? "bg-primary/20 text-primary"
+                            : task.status === "verified"
                             ? "bg-success/20 text-success"
                             : task.status === "pending"
                             ? "bg-muted text-muted-foreground"
@@ -117,15 +124,28 @@ const ReferralsManagement = () => {
                         {task.status}
                       </span>
                     </TableCell>
+                    <TableCell>
+                      {task.proof_url ? (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedProof(task.proof_url!)}
+                        >
+                          <Image className="h-4 w-4" />
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">No proof</span>
+                      )}
+                    </TableCell>
                     <TableCell>{new Date(task.created_at).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right space-x-2">
-                      {task.status === "pending" && (
+                      {(task.status === "pending" || task.status === "completed") && (
                         <>
                           <Button
                             size="sm"
-                            onClick={() => updateTaskStatus(task.id, "completed")}
+                            onClick={() => updateTaskStatus(task.id, "verified")}
                           >
-                            Approve
+                            Verify
                           </Button>
                           <Button
                             size="sm"
@@ -144,6 +164,23 @@ const ReferralsManagement = () => {
           </div>
         </CardContent>
       </Card>
+
+      <Dialog open={!!selectedProof} onOpenChange={() => setSelectedProof(null)}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Task Proof Screenshot</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center justify-center p-4">
+            {selectedProof && (
+              <img 
+                src={selectedProof} 
+                alt="Task proof" 
+                className="max-w-full max-h-[70vh] object-contain rounded-lg"
+              />
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
