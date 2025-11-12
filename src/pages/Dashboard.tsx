@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Upload, Image } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import BottomNav from "@/components/BottomNav";
 import OfferCard from "@/components/OfferCard";
@@ -21,11 +21,15 @@ const Dashboard = () => {
   const [copied, setCopied] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [agreedToInstructions, setAgreedToInstructions] = useState(false);
+  const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
+  const [remainingUploads, setRemainingUploads] = useState(3);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
       loadDashboardData(user.id);
+      checkDailyUploadLimit(user.id);
     }
   }, [user]);
 
@@ -147,6 +151,112 @@ const Dashboard = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const checkDailyUploadLimit = async (userId: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("proof_uploaded_at")
+      .eq("user_id", userId)
+      .not("proof_uploaded_at", "is", null)
+      .gte("proof_uploaded_at", today.toISOString());
+
+    if (!error && data) {
+      const uploadsToday = data.length;
+      setRemainingUploads(Math.max(0, 3 - uploadsToday));
+    }
+  };
+
+  const handleFileSelect = (taskId: string) => {
+    if (remainingUploads <= 0) {
+      toast({
+        title: "Daily limit reached",
+        description: "You can only upload 3 screenshots per day",
+        variant: "destructive",
+      });
+      return;
+    }
+    setUploadingTaskId(taskId);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!user || !uploadingTaskId) return;
+
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "File too large",
+        description: "Please upload an image smaller than 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Upload to storage
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}/${uploadingTaskId}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError, data } = await supabase.storage
+        .from("task-proofs")
+        .upload(fileName, file);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from("task-proofs")
+        .getPublicUrl(fileName);
+
+      // Update task with proof
+      const { error: updateError } = await supabase
+        .from("tasks")
+        .update({
+          proof_url: publicUrl,
+          proof_uploaded_at: new Date().toISOString(),
+          status: "completed",
+        })
+        .eq("id", uploadingTaskId);
+
+      if (updateError) throw updateError;
+
+      toast({
+        title: "Proof uploaded!",
+        description: "Your proof has been submitted for verification",
+      });
+
+      // Reload data
+      loadDashboardData(user.id);
+      checkDailyUploadLimit(user.id);
+    } catch (error: any) {
+      toast({
+        title: "Upload failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setUploadingTaskId(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const variants: any = {
       pending: "secondary",
@@ -219,6 +329,14 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="tasks" className="space-y-4">
+            {remainingUploads < 3 && (
+              <Card className="p-4 bg-primary/10 border-primary/20">
+                <p className="text-sm text-foreground">
+                  <Image className="inline h-4 w-4 mr-2" />
+                  Daily uploads remaining: <span className="font-semibold">{remainingUploads}/3</span>
+                </p>
+              </Card>
+            )}
             {tasks.length > 0 ? (
               tasks.map((task: any) => (
                 <Card key={task.id} className="p-4">
@@ -236,9 +354,20 @@ const Dashboard = () => {
                           Reason: {task.rejection_reason}
                         </p>
                       )}
+                      {task.proof_url && (
+                        <p className="text-sm text-success mt-2">
+                          ✓ Proof submitted
+                        </p>
+                      )}
                     </div>
-                    {task.status === "pending" && (
-                      <Button size="sm" variant="outline">
+                    {task.status === "pending" && !task.proof_url && (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleFileSelect(task.id)}
+                        disabled={remainingUploads <= 0}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
                         Upload Proof
                       </Button>
                     )}
@@ -253,6 +382,14 @@ const Dashboard = () => {
               </Card>
             )}
           </TabsContent>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileUpload}
+            className="hidden"
+          />
 
           <TabsContent value="affiliate" className="space-y-4">
             <Card className="p-6">
