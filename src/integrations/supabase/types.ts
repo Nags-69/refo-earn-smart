@@ -198,6 +198,7 @@ export type Database = {
           created_at: string | null
           id: string
           offer_id: string
+          proof_uploaded_at: string | null
           proof_url: string | null
           rejection_reason: string | null
           status: string | null
@@ -208,6 +209,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           offer_id: string
+          proof_uploaded_at?: string | null
           proof_url?: string | null
           rejection_reason?: string | null
           status?: string | null
@@ -218,6 +220,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           offer_id?: string
+          proof_uploaded_at?: string | null
           proof_url?: string | null
           rejection_reason?: string | null
           status?: string | null
