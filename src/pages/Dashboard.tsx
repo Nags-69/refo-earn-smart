@@ -21,15 +21,14 @@ const Dashboard = () => {
   const [copied, setCopied] = useState(false);
   const [selectedOffer, setSelectedOffer] = useState<any>(null);
   const [agreedToInstructions, setAgreedToInstructions] = useState(false);
-  const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
-  const [remainingUploads, setRemainingUploads] = useState(3);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const { toast } = useToast();
 
   useEffect(() => {
     if (user) {
       loadDashboardData(user.id);
-      checkDailyUploadLimit(user.id);
     }
   }, [user]);
 
@@ -151,109 +150,111 @@ const Dashboard = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const checkDailyUploadLimit = async (userId: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    const { data, error } = await supabase
-      .from("tasks")
-      .select("proof_uploaded_at")
-      .eq("user_id", userId)
-      .not("proof_uploaded_at", "is", null)
-      .gte("proof_uploaded_at", today.toISOString());
-
-    if (!error && data) {
-      const uploadsToday = data.length;
-      setRemainingUploads(Math.max(0, 3 - uploadsToday));
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // Validate all files
+    const validFiles = files.filter(file => {
+      const isImage = file.type.startsWith('image/');
+      const isUnder5MB = file.size <= 5 * 1024 * 1024;
+      
+      if (!isImage) {
+        toast({
+          title: "Invalid file type",
+          description: `${file.name} is not an image file`,
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      if (!isUnder5MB) {
+        toast({
+          title: "File too large",
+          description: `${file.name} must be under 5MB`,
+          variant: "destructive"
+        });
+        return false;
+      }
+      
+      return true;
+    });
+    
+    if (validFiles.length > 0) {
+      setSelectedFiles(validFiles);
     }
   };
 
-  const handleFileSelect = (taskId: string) => {
-    if (remainingUploads <= 0) {
-      toast({
-        title: "Daily limit reached",
-        description: "You can only upload 3 screenshots per day",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleUploadClick = (taskId: string) => {
     setUploadingTaskId(taskId);
+    setSelectedFiles([]);
     fileInputRef.current?.click();
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!user || !uploadingTaskId) return;
-
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
-      toast({
-        title: "Invalid file type",
-        description: "Please upload an image file",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast({
-        title: "File too large",
-        description: "Please upload an image smaller than 5MB",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleFileUpload = async () => {
+    if (!uploadingTaskId || selectedFiles.length === 0 || !user) return;
 
     try {
-      // Upload to storage
-      const fileExt = file.name.split(".").pop();
-      const fileName = `${user.id}/${uploadingTaskId}-${Date.now()}.${fileExt}`;
+      const uploadedUrls: string[] = [];
+      
+      // Upload all selected files
+      for (const file of selectedFiles) {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${user.id}/${uploadingTaskId}-${Date.now()}.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('task-proofs')
+          .upload(fileName, file);
 
-      const { error: uploadError, data } = await supabase.storage
-        .from("task-proofs")
-        .upload(fileName, file);
+        if (uploadError) throw uploadError;
 
-      if (uploadError) throw uploadError;
+        const { data: { publicUrl } } = supabase.storage
+          .from('task-proofs')
+          .getPublicUrl(fileName);
 
-      // Get public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from("task-proofs")
-        .getPublicUrl(fileName);
+        uploadedUrls.push(publicUrl);
+      }
 
-      // Update task with proof
+      // Get existing proof URLs
+      const { data: existingTask } = await supabase
+        .from('tasks')
+        .select('proof_url')
+        .eq('id', uploadingTaskId)
+        .single();
+
+      // Combine existing and new URLs
+      const allUrls = [
+        ...(existingTask?.proof_url || []),
+        ...uploadedUrls
+      ];
+
+      // Update task with all proof URLs
       const { error: updateError } = await supabase
-        .from("tasks")
+        .from('tasks')
         .update({
-          proof_url: publicUrl,
+          proof_url: allUrls,
           proof_uploaded_at: new Date().toISOString(),
-          status: "completed",
+          status: 'completed'
         })
-        .eq("id", uploadingTaskId);
+        .eq('id', uploadingTaskId);
 
       if (updateError) throw updateError;
 
       toast({
-        title: "Proof uploaded!",
-        description: "Your proof has been submitted for verification",
+        title: "Success!",
+        description: `${selectedFiles.length} screenshot(s) uploaded successfully`
       });
 
-      // Reload data
       loadDashboardData(user.id);
-      checkDailyUploadLimit(user.id);
+      setSelectedFiles([]);
     } catch (error: any) {
+      console.error('Upload error:', error);
       toast({
         title: "Upload failed",
         description: error.message,
-        variant: "destructive",
+        variant: "destructive"
       });
     } finally {
       setUploadingTaskId(null);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
     }
   };
 
@@ -329,48 +330,47 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="tasks" className="space-y-4">
-            {remainingUploads < 3 && (
-              <Card className="p-4 bg-primary/10 border-primary/20">
-                <p className="text-sm text-foreground">
-                  <Image className="inline h-4 w-4 mr-2" />
-                  Daily uploads remaining: <span className="font-semibold">{remainingUploads}/3</span>
-                </p>
-              </Card>
-            )}
+            <p className="text-sm text-muted-foreground">
+              Upload proof screenshots for your tasks. Multiple images supported.
+            </p>
             {tasks.length > 0 ? (
               tasks.map((task: any) => (
                 <Card key={task.id} className="p-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-heading font-semibold mb-2">
-                        {task.offers?.title}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        Reward: ₹{task.offers?.reward}
-                      </p>
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <h3 className="font-semibold">{task.offers?.title}</h3>
+                      <p className="text-sm text-muted-foreground">Reward: ₹{task.offers?.reward}</p>
                       {getStatusBadge(task.status)}
-                      {task.rejection_reason && (
-                        <p className="text-sm text-destructive mt-2">
-                          Reason: {task.rejection_reason}
-                        </p>
-                      )}
-                      {task.proof_url && (
-                        <p className="text-sm text-success mt-2">
-                          ✓ Proof submitted
+                      {task.proof_url && task.proof_url.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          {task.proof_url.length} screenshot(s) uploaded
                         </p>
                       )}
                     </div>
-                    {task.status === "pending" && !task.proof_url && (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleFileSelect(task.id)}
-                        disabled={remainingUploads <= 0}
+                    <div className="flex flex-col gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => handleUploadClick(task.id)}
+                        disabled={uploadingTaskId === task.id}
                       >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Proof
+                        {uploadingTaskId === task.id ? "Uploading..." : 
+                         task.proof_url && task.proof_url.length > 0 ? "Add More" : "Upload Proof"}
                       </Button>
-                    )}
+                      {selectedFiles.length > 0 && uploadingTaskId === task.id && (
+                        <div className="flex flex-col gap-2">
+                          <p className="text-xs text-muted-foreground">
+                            {selectedFiles.length} file(s) selected
+                          </p>
+                          <Button
+                            size="sm"
+                            variant="default"
+                            onClick={handleFileUpload}
+                          >
+                            Confirm Upload
+                          </Button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </Card>
               ))
@@ -387,8 +387,9 @@ const Dashboard = () => {
             ref={fileInputRef}
             type="file"
             accept="image/*"
-            onChange={handleFileUpload}
+            multiple
             className="hidden"
+            onChange={handleFileSelect}
           />
 
           <TabsContent value="affiliate" className="space-y-4">
