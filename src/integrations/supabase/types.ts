@@ -193,12 +193,31 @@ export type Database = {
         }
         Relationships: []
       }
+      task_cleanup_log: {
+        Row: {
+          id: string
+          last_cleanup_at: string
+          tasks_cleaned: number | null
+        }
+        Insert: {
+          id?: string
+          last_cleanup_at?: string
+          tasks_cleaned?: number | null
+        }
+        Update: {
+          id?: string
+          last_cleanup_at?: string
+          tasks_cleaned?: number | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string | null
           id: string
           offer_id: string
-          proof_url: string | null
+          proof_uploaded_at: string | null
+          proof_url: string[] | null
           rejection_reason: string | null
           status: string | null
           updated_at: string | null
@@ -208,7 +227,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           offer_id: string
-          proof_url?: string | null
+          proof_uploaded_at?: string | null
+          proof_url?: string[] | null
           rejection_reason?: string | null
           status?: string | null
           updated_at?: string | null
@@ -218,7 +238,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           offer_id?: string
-          proof_url?: string | null
+          proof_uploaded_at?: string | null
+          proof_url?: string[] | null
           rejection_reason?: string | null
           status?: string | null
           updated_at?: string | null
@@ -317,6 +338,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_old_task_proofs: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
