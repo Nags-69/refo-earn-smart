@@ -23,11 +23,34 @@ const ReferralsManagement = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [selectedProofs, setSelectedProofs] = useState<string[]>([]);
   const [currentProofIndex, setCurrentProofIndex] = useState(0);
+  const [cleanupInfo, setCleanupInfo] = useState<{ last_cleanup_at: string } | null>(null);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchTasks();
+    fetchCleanupInfo();
   }, []);
+
+  const fetchCleanupInfo = async () => {
+    const { data } = await supabase
+      .from("task_cleanup_log" as any)
+      .select("last_cleanup_at")
+      .order("last_cleanup_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    
+    if (data) {
+      setCleanupInfo(data as any);
+    }
+  };
+
+  const getDaysSinceCleanup = () => {
+    if (!cleanupInfo) return null;
+    const lastCleanup = new Date(cleanupInfo.last_cleanup_at);
+    const now = new Date();
+    const daysDiff = Math.floor((now.getTime() - lastCleanup.getTime()) / (1000 * 60 * 60 * 24));
+    return daysDiff;
+  };
 
   const fetchTasks = async () => {
     const { data: tasksData, error } = await supabase
@@ -61,7 +84,8 @@ const ReferralsManagement = () => {
             user_email: profile?.username || profile?.email || "N/A",
             offer_title: offer?.title || "N/A",
             offer_reward: offer?.reward || 0,
-          };
+            proof_url: task.proof_url ? (Array.isArray(task.proof_url) ? task.proof_url : [task.proof_url]) : undefined,
+          } as Task;
         })
       );
 
@@ -85,7 +109,22 @@ const ReferralsManagement = () => {
 
   return (
     <div>
-      <h2 className="text-3xl font-bold mb-6">Referrals Management</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-3xl font-bold">Referrals Management</h2>
+        {cleanupInfo && (
+          <Card className="px-4 py-2">
+            <p className="text-xs text-muted-foreground">Auto-cleanup status</p>
+            <p className="text-sm font-medium">
+              {getDaysSinceCleanup() === 0 ? "Cleaned today" : 
+               getDaysSinceCleanup() === 1 ? "Cleaned yesterday" :
+               `Cleaned ${getDaysSinceCleanup()} days ago`}
+            </p>
+            <p className="text-xs text-muted-foreground mt-1">
+              Screenshots older than 7 days are auto-deleted daily at 2 AM
+            </p>
+          </Card>
+        )}
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>All Referral Tasks</CardTitle>

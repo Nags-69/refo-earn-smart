@@ -221,9 +221,14 @@ const Dashboard = () => {
         .eq('id', uploadingTaskId)
         .single();
 
+      // Ensure proof_url is always an array
+      const existingUrls = existingTask?.proof_url 
+        ? (Array.isArray(existingTask.proof_url) ? existingTask.proof_url : [existingTask.proof_url])
+        : [];
+
       // Combine existing and new URLs
       const allUrls = [
-        ...(existingTask?.proof_url || []),
+        ...existingUrls,
         ...uploadedUrls
       ];
 
@@ -231,7 +236,7 @@ const Dashboard = () => {
       const { error: updateError } = await supabase
         .from('tasks')
         .update({
-          proof_url: allUrls,
+          proof_url: allUrls as any,
           proof_uploaded_at: new Date().toISOString(),
           status: 'completed'
         })
