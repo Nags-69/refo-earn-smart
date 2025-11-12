@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LayoutDashboard, Package, Users, CreditCard, MessageSquare, Settings, Link2, UserCog } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Badge } from "@/components/ui/badge";
 import Overview from "@/components/admin/Overview";
 import OffersManagement from "@/components/admin/OffersManagement";
 import ReferralsManagement from "@/components/admin/ReferralsManagement";
@@ -13,6 +15,42 @@ type AdminSection = "overview" | "offers" | "referrals" | "payouts" | "chat" | "
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
+  const [pendingVerificationCount, setPendingVerificationCount] = useState(0);
+
+  useEffect(() => {
+    fetchPendingCount();
+
+    // Set up real-time subscription for task updates
+    const channel = supabase
+      .channel('admin-task-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          fetchPendingCount();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const fetchPendingCount = async () => {
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("id", { count: 'exact' })
+      .in("status", ["pending", "completed"]);
+
+    if (!error && data) {
+      setPendingVerificationCount(data.length);
+    }
+  };
 
   const sections = [
     { id: "overview" as AdminSection, label: "Overview", icon: LayoutDashboard },
@@ -65,6 +103,11 @@ const Admin = () => {
             >
               <section.icon className="h-4 w-4" />
               <span className="text-sm font-medium">{section.label}</span>
+              {section.id === "referrals" && pendingVerificationCount > 0 && (
+                <Badge variant="destructive" className="ml-1 h-5 min-w-5 px-1">
+                  {pendingVerificationCount}
+                </Badge>
+              )}
             </button>
           ))}
         </div>
@@ -90,6 +133,11 @@ const Admin = () => {
               >
                 <section.icon className="h-5 w-5" />
                 <span className="font-medium">{section.label}</span>
+                {section.id === "referrals" && pendingVerificationCount > 0 && (
+                  <Badge variant="destructive" className="ml-auto h-5 min-w-5 px-1.5">
+                    {pendingVerificationCount}
+                  </Badge>
+                )}
               </button>
             ))}
           </nav>
