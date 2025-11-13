@@ -126,6 +126,44 @@ const Dashboard = () => {
       return;
     }
 
+    // Add pending transaction and update wallet
+    const { error: transactionError } = await supabase
+      .from("transactions")
+      .insert({
+        user_id: user.id,
+        type: "earning",
+        amount: selectedOffer.reward,
+        status: "pending",
+        description: `Pending: ${selectedOffer.title}`,
+      });
+
+    if (!transactionError) {
+      // Update wallet pending balance
+      await supabase.rpc('increment_pending_balance' as any, {
+        p_user_id: user.id,
+        p_amount: selectedOffer.reward
+      }).then((result) => {
+        // If RPC doesn't exist, fallback to manual update
+        if (result.error) {
+          supabase
+            .from("wallet")
+            .select("pending_balance")
+            .eq("user_id", user.id)
+            .single()
+            .then(({ data: walletData }) => {
+              if (walletData) {
+                supabase
+                  .from("wallet")
+                  .update({
+                    pending_balance: Number(walletData.pending_balance || 0) + Number(selectedOffer.reward)
+                  })
+                  .eq("user_id", user.id);
+              }
+            });
+        }
+      });
+    }
+
     toast({
       title: "Task started!",
       description: "Redirecting to app download...",

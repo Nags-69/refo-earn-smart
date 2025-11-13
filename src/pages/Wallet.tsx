@@ -58,6 +58,34 @@ const Wallet = () => {
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
     setPayoutRequests(payoutData || []);
+
+    // Set up realtime subscription for payout updates
+    const channel = supabase
+      .channel('payout-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'payout_requests',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          const updatedRequest = payload.new as any;
+          if (updatedRequest.status === 'completed') {
+            toast({
+              title: "Payment Successful! 💸",
+              description: `₹${updatedRequest.amount} has been paid to your account`,
+            });
+            loadWalletData();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   };
 
   const formatDate = (dateString: string) => {

@@ -94,6 +94,9 @@ const ReferralsManagement = () => {
   };
 
   const updateTaskStatus = async (taskId: string, newStatus: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
+
     const { error } = await supabase
       .from("tasks")
       .update({ status: newStatus })
@@ -101,10 +104,72 @@ const ReferralsManagement = () => {
 
     if (error) {
       toast({ title: "Error updating status", variant: "destructive" });
+      return;
+    }
+
+    // If verified, move pending amount to total balance
+    if (newStatus === "verified") {
+      // Update transaction to completed
+      await supabase
+        .from("transactions")
+        .update({ status: "completed" })
+        .eq("user_id", task.user_id)
+        .eq("description", `Pending: ${task.offer_title}`)
+        .eq("status", "pending");
+
+      // Get current wallet
+      const { data: walletData } = await supabase
+        .from("wallet")
+        .select("*")
+        .eq("user_id", task.user_id)
+        .single();
+
+      if (walletData) {
+        const newTotalBalance = Number(walletData.total_balance || 0) + Number(task.offer_reward);
+        const newPendingBalance = Number(walletData.pending_balance || 0) - Number(task.offer_reward);
+
+        await supabase
+          .from("wallet")
+          .update({
+            total_balance: newTotalBalance,
+            pending_balance: Math.max(0, newPendingBalance),
+          })
+          .eq("user_id", task.user_id);
+      }
+
+      toast({ title: `Task verified! ₹${task.offer_reward} added to user wallet` });
+    } else if (newStatus === "rejected") {
+      // Remove pending transaction
+      await supabase
+        .from("transactions")
+        .delete()
+        .eq("user_id", task.user_id)
+        .eq("description", `Pending: ${task.offer_title}`)
+        .eq("status", "pending");
+
+      // Deduct from pending balance
+      const { data: walletData } = await supabase
+        .from("wallet")
+        .select("pending_balance")
+        .eq("user_id", task.user_id)
+        .single();
+
+      if (walletData) {
+        const newPendingBalance = Number(walletData.pending_balance || 0) - Number(task.offer_reward);
+        await supabase
+          .from("wallet")
+          .update({
+            pending_balance: Math.max(0, newPendingBalance),
+          })
+          .eq("user_id", task.user_id);
+      }
+
+      toast({ title: "Task rejected" });
     } else {
       toast({ title: `Task marked as ${newStatus}` });
-      fetchTasks();
     }
+
+    fetchTasks();
   };
 
   return (

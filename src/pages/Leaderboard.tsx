@@ -24,6 +24,37 @@ const Leaderboard = () => {
   useEffect(() => {
     loadLeaderboard();
     getCurrentUser();
+
+    // Set up realtime updates
+    const channel = supabase
+      .channel('leaderboard-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'wallet'
+        },
+        () => {
+          loadLeaderboard();
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tasks'
+        },
+        () => {
+          loadLeaderboard();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const getCurrentUser = async () => {
