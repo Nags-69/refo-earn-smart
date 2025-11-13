@@ -109,16 +109,36 @@ const ReferralsManagement = () => {
 
     // If verified, move pending amount to total balance
     if (newStatus === "verified") {
-      // Update transaction to completed and fix description
-      await supabase
+      // Check if transaction already exists (for completed tasks)
+      const { data: existingTransaction } = await supabase
         .from("transactions")
-        .update({ 
-          status: "completed",
-          description: `Completed: ${task.offer_title}` // Remove "Pending:" prefix
-        })
+        .select("*")
         .eq("user_id", task.user_id)
         .eq("description", `Pending: ${task.offer_title}`)
-        .eq("status", "pending");
+        .eq("status", "pending")
+        .maybeSingle();
+
+      if (existingTransaction) {
+        // Update existing transaction to completed
+        await supabase
+          .from("transactions")
+          .update({ 
+            status: "completed",
+            description: `Completed: ${task.offer_title}`
+          })
+          .eq("id", existingTransaction.id);
+      } else {
+        // Create new transaction for pending tasks approved directly
+        await supabase
+          .from("transactions")
+          .insert({
+            user_id: task.user_id,
+            type: "earning",
+            amount: task.offer_reward,
+            status: "completed",
+            description: `Completed: ${task.offer_title}`,
+          });
+      }
 
       // Get current wallet
       const { data: walletData } = await supabase
@@ -128,8 +148,9 @@ const ReferralsManagement = () => {
         .single();
 
       if (walletData) {
+        const pendingAmount = existingTransaction ? Number(task.offer_reward) : 0;
         const newTotalBalance = Number(walletData.total_balance || 0) + Number(task.offer_reward);
-        const newPendingBalance = Number(walletData.pending_balance || 0) - Number(task.offer_reward);
+        const newPendingBalance = Number(walletData.pending_balance || 0) - pendingAmount;
 
         await supabase
           .from("wallet")
@@ -142,7 +163,7 @@ const ReferralsManagement = () => {
 
       toast({ title: `Task verified! ₹${task.offer_reward} added to user wallet` });
     } else if (newStatus === "rejected") {
-      // Remove pending transaction
+      // Remove pending transaction if exists
       await supabase
         .from("transactions")
         .delete()

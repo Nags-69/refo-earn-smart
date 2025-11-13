@@ -34,6 +34,7 @@ type PayoutRequest = {
 const PayoutsManagement = () => {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
+  const [selectedPayoutDetails, setSelectedPayoutDetails] = useState<PayoutRequest | null>(null);
   const [adjustmentDialog, setAdjustmentDialog] = useState<{
     open: boolean;
     userId: string;
@@ -324,7 +325,6 @@ const PayoutsManagement = () => {
                   <TableHead>User</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Method</TableHead>
-                  <TableHead>Details</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -336,17 +336,6 @@ const PayoutsManagement = () => {
                     <TableCell className="font-medium">{request.user_email}</TableCell>
                     <TableCell>₹{Number(request.amount).toFixed(2)}</TableCell>
                     <TableCell>{request.payout_method}</TableCell>
-                    <TableCell className="text-xs">
-                      {request.payout_method === "UPI" ? (
-                        <span>UPI: {request.upi_id}</span>
-                      ) : (
-                        <div>
-                          <div>A/C: {request.bank_account_number}</div>
-                          <div>IFSC: {request.bank_ifsc_code}</div>
-                          <div>Name: {request.bank_account_holder}</div>
-                        </div>
-                      )}
-                    </TableCell>
                     <TableCell>
                       <span
                         className={`px-2 py-1 rounded-full text-xs ${
@@ -366,6 +355,13 @@ const PayoutsManagement = () => {
                         <>
                           <Button
                             size="sm"
+                            variant="outline"
+                            onClick={() => setSelectedPayoutDetails(request)}
+                          >
+                            View Details
+                          </Button>
+                          <Button
+                            size="sm"
                             onClick={() => handlePayoutRequest(request.id, "approve")}
                           >
                             Pay
@@ -378,6 +374,15 @@ const PayoutsManagement = () => {
                             Reject
                           </Button>
                         </>
+                      )}
+                      {request.status !== "pending" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setSelectedPayoutDetails(request)}
+                        >
+                          View Details
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>
@@ -516,6 +521,75 @@ const PayoutsManagement = () => {
               >
                 {adjustmentDialog.type === "add" ? "Add Bonus" : "Deduct Amount"}
               </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Bank Details Dialog */}
+      <Dialog open={!!selectedPayoutDetails} onOpenChange={() => setSelectedPayoutDetails(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Payout Details</DialogTitle>
+            <DialogDescription>
+              User: {selectedPayoutDetails?.user_email}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div className="grid grid-cols-2 gap-2 p-4 bg-muted/50 rounded-lg">
+              <div className="text-sm text-muted-foreground">Amount:</div>
+              <div className="text-sm font-bold">₹{selectedPayoutDetails?.amount}</div>
+              
+              <div className="text-sm text-muted-foreground">Method:</div>
+              <div className="text-sm font-medium">{selectedPayoutDetails?.payout_method}</div>
+              
+              <div className="text-sm text-muted-foreground">Status:</div>
+              <div className="text-sm">
+                <span className={`px-2 py-1 rounded-full text-xs ${
+                  selectedPayoutDetails?.status === "pending"
+                    ? "bg-yellow-500/20 text-yellow-500"
+                    : selectedPayoutDetails?.status === "completed"
+                    ? "bg-green-500/20 text-green-500"
+                    : "bg-red-500/20 text-red-500"
+                }`}>
+                  {selectedPayoutDetails?.status}
+                </span>
+              </div>
+            </div>
+
+            {selectedPayoutDetails?.payout_method === "UPI" ? (
+              <div className="p-4 border rounded-lg bg-background">
+                <h4 className="font-semibold mb-2">UPI Details</h4>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">UPI ID:</span>
+                    <span className="text-sm font-mono font-medium">{selectedPayoutDetails?.upi_id}</span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 border rounded-lg bg-background">
+                <h4 className="font-semibold mb-3">Bank Account Details</h4>
+                <div className="space-y-3">
+                  <div>
+                    <span className="text-xs text-muted-foreground">Account Holder Name</span>
+                    <p className="text-sm font-medium mt-1">{selectedPayoutDetails?.bank_account_holder}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">Account Number</span>
+                    <p className="text-sm font-mono font-medium mt-1">{selectedPayoutDetails?.bank_account_number}</p>
+                  </div>
+                  <div>
+                    <span className="text-xs text-muted-foreground">IFSC Code</span>
+                    <p className="text-sm font-mono font-medium mt-1">{selectedPayoutDetails?.bank_ifsc_code}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="text-xs text-muted-foreground text-center">
+              Created: {selectedPayoutDetails && new Date(selectedPayoutDetails.created_at).toLocaleString()}
             </div>
           </div>
         </DialogContent>
