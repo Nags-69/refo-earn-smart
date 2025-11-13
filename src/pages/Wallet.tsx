@@ -193,15 +193,17 @@ const Wallet = () => {
     }))];
     
     if (type === "earnings") {
-      return transactions.filter((t: any) => t.type === "earning");
+      return transactions.filter((t: any) => 
+        t.type === "earning" || t.type === "bonus"
+      );
     }
     
     if (type === "withdrawals") {
-      return payoutRequests.map(p => ({
+      return [...payoutRequests.map(p => ({
         ...p,
         type: "withdrawal",
         description: `Withdrawal via ${p.payout_method}`,
-      }));
+      })), ...transactions.filter((t: any) => t.type === "deduction")];
     }
     
     return [];
@@ -385,8 +387,8 @@ const Wallet = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-2xl ${
-                            item.type === "earning" ? "bg-success/20" : 
-                            item.type === "withdrawal" ? "bg-primary/20" : "bg-destructive/20"
+                            item.type === "earning" || item.type === "bonus" ? "bg-success/20" : 
+                            item.type === "withdrawal" || item.type === "deduction" ? "bg-primary/20" : "bg-destructive/20"
                           }`}>
                             {getStatusIcon(item.status)}
                           </div>
@@ -399,9 +401,9 @@ const Wallet = () => {
                         </div>
                         <div className="text-right">
                           <p className={`font-heading font-bold ${
-                            item.type === "earning" ? "text-success" : "text-primary"
+                            item.type === "earning" || item.type === "bonus" ? "text-success" : "text-primary"
                           }`}>
-                            {item.type === "earning" ? "+" : "-"}₹{item.amount}
+                            {item.type === "earning" || item.type === "bonus" ? "+" : "-"}₹{item.amount}
                           </p>
                           <div className="flex items-center gap-1">
                             <span>{getStatusEmoji(item.status)}</span>

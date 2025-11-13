@@ -2,8 +2,12 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Plus, Minus } from "lucide-react";
 
 type Payout = {
   user_id: string;
@@ -30,6 +34,14 @@ type PayoutRequest = {
 const PayoutsManagement = () => {
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [payoutRequests, setPayoutRequests] = useState<PayoutRequest[]>([]);
+  const [adjustmentDialog, setAdjustmentDialog] = useState<{
+    open: boolean;
+    userId: string;
+    userEmail: string;
+    type: "add" | "reduce";
+  }>({ open: false, userId: "", userEmail: "", type: "add" });
+  const [adjustmentAmount, setAdjustmentAmount] = useState("");
+  const [adjustmentReason, setAdjustmentReason] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -195,6 +207,106 @@ const PayoutsManagement = () => {
     }
   };
 
+  const handleBalanceAdjustment = async () => {
+    const amount = parseFloat(adjustmentAmount);
+    
+    if (!amount || amount <= 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Please enter a valid positive amount",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!adjustmentReason.trim()) {
+      toast({
+        title: "Reason required",
+        description: "Please provide a reason for this adjustment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      // Get current wallet balance
+      const { data: walletData } = await supabase
+        .from("wallet")
+        .select("total_balance")
+        .eq("user_id", adjustmentDialog.userId)
+        .single();
+
+      if (!walletData) {
+        toast({ title: "User wallet not found", variant: "destructive" });
+        return;
+      }
+
+      let newBalance: number;
+      let transactionType: string;
+      let description: string;
+
+      if (adjustmentDialog.type === "add") {
+        newBalance = Number(walletData.total_balance) + amount;
+        transactionType = "bonus";
+        description = `Bonus: ${adjustmentReason}`;
+      } else {
+        newBalance = Number(walletData.total_balance) - amount;
+        transactionType = "deduction";
+        description = `Deduction: ${adjustmentReason}`;
+
+        if (newBalance < 0) {
+          toast({
+            title: "Insufficient balance",
+            description: "Cannot reduce more than current balance",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Update wallet balance
+      const { error: walletError } = await supabase
+        .from("wallet")
+        .update({ total_balance: newBalance })
+        .eq("user_id", adjustmentDialog.userId);
+
+      if (walletError) throw walletError;
+
+      // Create transaction record
+      const { error: transactionError } = await supabase
+        .from("transactions")
+        .insert({
+          user_id: adjustmentDialog.userId,
+          type: transactionType,
+          amount: amount,
+          status: "completed",
+          description: description,
+        });
+
+      if (transactionError) throw transactionError;
+
+      toast({
+        title: "Balance adjusted successfully",
+        description: `${adjustmentDialog.type === "add" ? "Added" : "Reduced"} ₹${amount} ${
+          adjustmentDialog.type === "add" ? "to" : "from"
+        } ${adjustmentDialog.userEmail}'s wallet`,
+      });
+
+      // Reset form and close dialog
+      setAdjustmentDialog({ open: false, userId: "", userEmail: "", type: "add" });
+      setAdjustmentAmount("");
+      setAdjustmentReason("");
+      fetchPayouts();
+      fetchPayoutRequests();
+    } catch (error: any) {
+      toast({
+        title: "Error adjusting balance",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="space-y-6">
       <h2 className="text-3xl font-bold">Payouts Management</h2>
@@ -290,7 +402,7 @@ const PayoutsManagement = () => {
                   <TableHead>Total Earnings</TableHead>
                   <TableHead>Pending Balance</TableHead>
                   <TableHead>Completed Payouts</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="text-right">Adjust Balance</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -301,7 +413,38 @@ const PayoutsManagement = () => {
                     <TableCell>${payout.pending_balance.toFixed(2)}</TableCell>
                     <TableCell>${payout.completed_payouts.toFixed(2)}</TableCell>
                     <TableCell className="text-right">
-                      <span className="text-sm text-muted-foreground">View only</span>
+                      <div className="flex gap-2 justify-end">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setAdjustmentDialog({
+                              open: true,
+                              userId: payout.user_id,
+                              userEmail: payout.user_email || "",
+                              type: "add",
+                            })
+                          }
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add Bonus
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() =>
+                            setAdjustmentDialog({
+                              open: true,
+                              userId: payout.user_id,
+                              userEmail: payout.user_email || "",
+                              type: "reduce",
+                            })
+                          }
+                        >
+                          <Minus className="h-4 w-4 mr-1" />
+                          Deduct
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -310,6 +453,73 @@ const PayoutsManagement = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Balance Adjustment Dialog */}
+      <Dialog open={adjustmentDialog.open} onOpenChange={(open) => {
+        if (!open) {
+          setAdjustmentDialog({ open: false, userId: "", userEmail: "", type: "add" });
+          setAdjustmentAmount("");
+          setAdjustmentReason("");
+        }
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {adjustmentDialog.type === "add" ? "Add Bonus" : "Reduce Balance"}
+            </DialogTitle>
+            <DialogDescription>
+              {adjustmentDialog.type === "add" 
+                ? `Add bonus to ${adjustmentDialog.userEmail}'s wallet` 
+                : `Reduce balance from ${adjustmentDialog.userEmail}'s wallet`}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 py-4">
+            <div>
+              <Label htmlFor="amount">Amount (₹)</Label>
+              <Input
+                id="amount"
+                type="number"
+                min="1"
+                step="0.01"
+                placeholder="Enter amount"
+                value={adjustmentAmount}
+                onChange={(e) => setAdjustmentAmount(e.target.value)}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="reason">Reason</Label>
+              <Input
+                id="reason"
+                placeholder="e.g., Performance bonus, Correction, etc."
+                value={adjustmentReason}
+                onChange={(e) => setAdjustmentReason(e.target.value)}
+                maxLength={200}
+              />
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setAdjustmentDialog({ open: false, userId: "", userEmail: "", type: "add" });
+                  setAdjustmentAmount("");
+                  setAdjustmentReason("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleBalanceAdjustment}
+                variant={adjustmentDialog.type === "add" ? "default" : "destructive"}
+              >
+                {adjustmentDialog.type === "add" ? "Add Bonus" : "Deduct Amount"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
