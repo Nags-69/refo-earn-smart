@@ -408,10 +408,10 @@ const PayoutsManagement = () => {
               <TableBody>
                 {payouts.map((payout) => (
                   <TableRow key={payout.user_id}>
-                    <TableCell className="font-medium">{payout.user_email}</TableCell>
-                    <TableCell>${payout.total_earnings.toFixed(2)}</TableCell>
-                    <TableCell>${payout.pending_balance.toFixed(2)}</TableCell>
-                    <TableCell>${payout.completed_payouts.toFixed(2)}</TableCell>
+                  <TableCell className="font-medium">{payout.user_email}</TableCell>
+                    <TableCell>₹{payout.total_earnings.toFixed(2)}</TableCell>
+                    <TableCell>₹{payout.pending_balance.toFixed(2)}</TableCell>
+                    <TableCell>₹{payout.completed_payouts.toFixed(2)}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex gap-2 justify-end">
                         <Button

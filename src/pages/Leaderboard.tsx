@@ -11,6 +11,7 @@ interface LeaderboardEntry {
   username: string;
   email: string;
   total_earnings: number;
+  current_balance: number;
   tasks_completed: number;
   current_streak: number;
   badges_count: number;
@@ -91,18 +92,33 @@ const Leaderboard = () => {
       .from("profiles")
       .select("id, username, email");
 
+    // Get all completed transactions (withdrawals) for each user
+    const { data: transactionsData } = await supabase
+      .from("transactions")
+      .select("user_id, amount")
+      .eq("status", "completed")
+      .eq("type", "withdrawal");
+
     // Combine data
     const leaderboardData = walletsData.map((wallet, index) => {
       const profile = profilesData?.find(p => p.id === wallet.user_id);
       const tasks = tasksData?.filter(t => t.user_id === wallet.user_id).length || 0;
       const streak = streaksData?.find(s => s.user_id === wallet.user_id)?.current_streak || 0;
       const badges = badgesData?.filter(b => b.user_id === wallet.user_id).length || 0;
+      
+      // Calculate total withdrawals for this user
+      const completedPayouts = transactionsData?.filter(t => t.user_id === wallet.user_id)
+        .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+      
+      // Total earnings = current balance + completed withdrawals
+      const totalEarnings = Number(wallet.total_balance) + completedPayouts;
 
       return {
         user_id: wallet.user_id,
         username: profile?.username || profile?.email?.split('@')[0] || 'User',
         email: profile?.email || '',
-        total_earnings: Number(wallet.total_balance),
+        total_earnings: totalEarnings,
+        current_balance: Number(wallet.total_balance),
         tasks_completed: tasks,
         current_streak: streak,
         badges_count: badges,
@@ -153,7 +169,10 @@ const Leaderboard = () => {
               <p className="text-2xl font-heading font-bold text-primary mt-2">
                 ₹{leaderboard[1].total_earnings.toFixed(2)}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
+                Wallet: ₹{leaderboard[1].current_balance.toFixed(2)}
+              </p>
+              <p className="text-sm text-muted-foreground">
                 {leaderboard[1].tasks_completed} tasks
               </p>
             </Card>
@@ -172,7 +191,10 @@ const Leaderboard = () => {
               <p className="text-3xl font-heading font-bold text-primary mt-2">
                 ₹{leaderboard[0].total_earnings.toFixed(2)}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
+                Wallet: ₹{leaderboard[0].current_balance.toFixed(2)}
+              </p>
+              <p className="text-sm text-muted-foreground">
                 {leaderboard[0].tasks_completed} tasks
               </p>
             </Card>
@@ -191,7 +213,10 @@ const Leaderboard = () => {
               <p className="text-2xl font-heading font-bold text-primary mt-2">
                 ₹{leaderboard[2].total_earnings.toFixed(2)}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
+                Wallet: ₹{leaderboard[2].current_balance.toFixed(2)}
+              </p>
+              <p className="text-sm text-muted-foreground">
                 {leaderboard[2].tasks_completed} tasks
               </p>
             </Card>
@@ -249,6 +274,9 @@ const Leaderboard = () => {
                 <div className="text-right">
                   <p className="text-xl font-heading font-bold text-primary">
                     ₹{entry.total_earnings.toFixed(2)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Wallet: ₹{entry.current_balance.toFixed(2)}
                   </p>
                 </div>
               </div>
