@@ -193,6 +193,51 @@ export type Database = {
         }
         Relationships: []
       }
+      payout_requests: {
+        Row: {
+          amount: number
+          bank_account_holder: string | null
+          bank_account_number: string | null
+          bank_ifsc_code: string | null
+          created_at: string
+          id: string
+          payout_method: string
+          processed_at: string | null
+          rejection_reason: string | null
+          status: string
+          upi_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_ifsc_code?: string | null
+          created_at?: string
+          id?: string
+          payout_method: string
+          processed_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          upi_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          bank_account_holder?: string | null
+          bank_account_number?: string | null
+          bank_ifsc_code?: string | null
+          created_at?: string
+          id?: string
+          payout_method?: string
+          processed_at?: string | null
+          rejection_reason?: string | null
+          status?: string
+          upi_id?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string | null
