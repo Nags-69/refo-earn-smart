@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Wallet from "./pages/Wallet";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import Leaderboard from "./pages/Leaderboard";
 import NotFound from "./pages/NotFound";
 import RefoAI from "./components/RefoAI";
 
@@ -26,6 +27,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/wallet" element={<ProtectedRoute><Wallet /></ProtectedRoute>} />
+            <Route path="/leaderboard" element={<ProtectedRoute><Leaderboard /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
             <Route path="*" element={<NotFound />} />

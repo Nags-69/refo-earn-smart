@@ -244,6 +244,16 @@ const Dashboard = () => {
 
       if (updateError) throw updateError;
 
+      // Update gamification (streaks and badges)
+      try {
+        await supabase.functions.invoke('update-gamification', {
+          body: { userId: user.id }
+        });
+      } catch (gamError) {
+        console.log('Gamification update failed:', gamError);
+        // Don't block task completion if gamification fails
+      }
+
       toast({
         title: "Success!",
         description: `${selectedFiles.length} screenshot(s) uploaded successfully`

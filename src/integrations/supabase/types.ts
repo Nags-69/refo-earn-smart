@@ -41,6 +41,36 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          created_at: string | null
+          description: string
+          icon: string
+          id: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+        }
+        Insert: {
+          created_at?: string | null
+          description: string
+          icon: string
+          id?: string
+          name: string
+          requirement_type: string
+          requirement_value: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+          requirement_type?: string
+          requirement_value?: number
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -193,12 +223,31 @@ export type Database = {
         }
         Relationships: []
       }
+      task_cleanup_log: {
+        Row: {
+          id: string
+          last_cleanup_at: string
+          tasks_cleaned: number | null
+        }
+        Insert: {
+          id?: string
+          last_cleanup_at?: string
+          tasks_cleaned?: number | null
+        }
+        Update: {
+          id?: string
+          last_cleanup_at?: string
+          tasks_cleaned?: number | null
+        }
+        Relationships: []
+      }
       tasks: {
         Row: {
           created_at: string | null
           id: string
           offer_id: string
-          proof_url: string | null
+          proof_uploaded_at: string | null
+          proof_url: string[] | null
           rejection_reason: string | null
           status: string | null
           updated_at: string | null
@@ -208,7 +257,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           offer_id: string
-          proof_url?: string | null
+          proof_uploaded_at?: string | null
+          proof_url?: string[] | null
           rejection_reason?: string | null
           status?: string | null
           updated_at?: string | null
@@ -218,7 +268,8 @@ export type Database = {
           created_at?: string | null
           id?: string
           offer_id?: string
-          proof_url?: string | null
+          proof_uploaded_at?: string | null
+          proof_url?: string[] | null
           rejection_reason?: string | null
           status?: string | null
           updated_at?: string | null
@@ -264,6 +315,35 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -281,6 +361,36 @@ export type Database = {
           created_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_streaks: {
+        Row: {
+          created_at: string | null
+          current_streak: number | null
+          id: string
+          last_activity_date: string | null
+          longest_streak: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak?: number | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -317,6 +427,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      delete_old_task_proofs: { Args: never; Returns: undefined }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

@@ -86,7 +86,7 @@ const Wallet = () => {
             <div>
               <h3 className="font-semibold mb-1">Payout Information</h3>
               <p className="text-sm text-muted-foreground">
-                Payouts are processed in 3–5 business days once your balance reaches ₹500
+                Payouts are processed in 3–5 business days once your balance reaches ₹200
               </p>
             </div>
           </div>

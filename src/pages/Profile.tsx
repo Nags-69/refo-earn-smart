@@ -10,6 +10,8 @@ import { User, Mail, Phone, CheckCircle2, LogOut, Edit2, Save, X } from "lucide-
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
+import StreakDisplay from "@/components/StreakDisplay";
+import BadgesDisplay from "@/components/BadgesDisplay";
 
 const Profile = () => {
   const { user, signOut } = useAuth();
@@ -160,6 +162,16 @@ const Profile = () => {
             </div>
           </div>
         </Card>
+
+        {/* Streaks */}
+        <div className="mb-6">
+          <StreakDisplay />
+        </div>
+
+        {/* Badges */}
+        <div className="mb-6">
+          <BadgesDisplay />
+        </div>
 
         {/* Account Info */}
         <Card className="p-6 mb-6">

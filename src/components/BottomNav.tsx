@@ -1,4 +1,4 @@
-import { Home, Wallet, LayoutDashboard, User } from "lucide-react";
+import { Home, Wallet, LayoutDashboard, User, Trophy } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,8 +13,9 @@ const BottomNav = () => {
 
   const navItems = [
     { icon: Home, label: "Home", path: "/", protected: false },
+    { icon: LayoutDashboard, label: "Tasks", path: "/dashboard", protected: true },
+    { icon: Trophy, label: "Ranks", path: "/leaderboard", protected: true },
     { icon: Wallet, label: "Wallet", path: "/wallet", protected: true },
-    { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard", protected: true },
     { icon: User, label: "Profile", path: "/profile", protected: true },
   ];
 
