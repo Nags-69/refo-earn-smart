@@ -189,18 +189,18 @@ const Wallet = () => {
     if (!type) return [...transactions, ...payoutRequests.map(p => ({
       ...p,
       type: "withdrawal",
-      description: `Withdrawal via ${p.payout_method.toUpperCase()}`,
+      description: `Withdrawal via ${p.payout_method}`,
     }))];
     
     if (type === "earnings") {
-      return transactions.filter((t: any) => t.type === "credit");
+      return transactions.filter((t: any) => t.type === "earning");
     }
     
     if (type === "withdrawals") {
       return payoutRequests.map(p => ({
         ...p,
         type: "withdrawal",
-        description: `Withdrawal via ${p.payout_method.toUpperCase()}`,
+        description: `Withdrawal via ${p.payout_method}`,
       }));
     }
     
@@ -385,7 +385,7 @@ const Wallet = () => {
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className={`p-2 rounded-2xl ${
-                            item.type === "credit" ? "bg-success/20" : 
+                            item.type === "earning" ? "bg-success/20" : 
                             item.type === "withdrawal" ? "bg-primary/20" : "bg-destructive/20"
                           }`}>
                             {getStatusIcon(item.status)}
@@ -399,9 +399,9 @@ const Wallet = () => {
                         </div>
                         <div className="text-right">
                           <p className={`font-heading font-bold ${
-                            item.type === "credit" ? "text-success" : "text-primary"
+                            item.type === "earning" ? "text-success" : "text-primary"
                           }`}>
-                            {item.type === "credit" ? "+" : "-"}₹{item.amount}
+                            {item.type === "earning" ? "+" : "-"}₹{item.amount}
                           </p>
                           <div className="flex items-center gap-1">
                             <span>{getStatusEmoji(item.status)}</span>
