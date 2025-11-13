@@ -70,11 +70,11 @@ const Leaderboard = () => {
 
     if (!walletsData) return;
 
-    // Get task counts for each user
+    // Get task counts for each user (only verified tasks)
     const { data: tasksData } = await supabase
       .from("tasks")
       .select("user_id")
-      .eq("status", "completed");
+      .eq("status", "verified");
 
     // Get streaks for each user
     const { data: streaksData } = await supabase

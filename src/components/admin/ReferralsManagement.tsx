@@ -109,10 +109,13 @@ const ReferralsManagement = () => {
 
     // If verified, move pending amount to total balance
     if (newStatus === "verified") {
-      // Update transaction to completed
+      // Update transaction to completed and fix description
       await supabase
         .from("transactions")
-        .update({ status: "completed" })
+        .update({ 
+          status: "completed",
+          description: `Completed: ${task.offer_title}` // Remove "Pending:" prefix
+        })
         .eq("user_id", task.user_id)
         .eq("description", `Pending: ${task.offer_title}`)
         .eq("status", "pending");
