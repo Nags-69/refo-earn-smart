@@ -65,7 +65,6 @@ const BadgesDisplay = () => {
   if (loading) return null;
 
   const earnedBadges = badges.filter(b => b.earned);
-  const lockedBadges = badges.filter(b => !b.earned);
 
   return (
     <div>
@@ -77,8 +76,8 @@ const BadgesDisplay = () => {
       </div>
 
       {/* Earned Badges */}
-      {earnedBadges.length > 0 && (
-        <div className="mb-6">
+      {earnedBadges.length > 0 ? (
+        <div>
           <h3 className="text-sm font-medium text-muted-foreground mb-3">Earned</h3>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {earnedBadges.map((badge) => {
@@ -100,6 +99,8 @@ const BadgesDisplay = () => {
             })}
           </div>
         </div>
+      ) : (
+        <p className="text-sm text-muted-foreground text-center py-4">Complete tasks to earn badges!</p>
       )}
 
     </div>
