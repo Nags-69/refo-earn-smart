@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Flame, TrendingUp } from "lucide-react";
+import { Trophy, Medal, TrendingUp } from "lucide-react";
 import BottomNav from "@/components/BottomNav";
 
 interface LeaderboardEntry {
@@ -154,7 +154,7 @@ const Leaderboard = () => {
 
         {/* Top 3 Podium */}
         {leaderboard.length >= 3 && (
-          <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             {/* 2nd Place */}
             <Card className="p-6 text-center order-1 bg-gradient-to-br from-muted/50 to-muted/10">
               <div className="flex justify-center mb-3">
@@ -234,12 +234,12 @@ const Leaderboard = () => {
                   : 'hover:bg-accent/50'
               }`}
             >
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-4 flex-1">
-                  <div className="w-12 flex justify-center">
+                  <div className="w-10 sm:w-12 flex justify-center">
                     {getRankIcon(entry.rank)}
                   </div>
-                  <Avatar className="h-12 w-12">
+                  <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
                     <AvatarFallback>
                       {entry.username.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -251,24 +251,12 @@ const Leaderboard = () => {
                         <Badge variant="secondary">You</Badge>
                       )}
                     </h3>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <TrendingUp className="h-4 w-4" />
-                        {entry.tasks_completed} tasks
-                      </span>
-                      {entry.current_streak > 0 && (
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         <span className="flex items-center gap-1">
-                          <Flame className="h-4 w-4 text-orange-500" />
-                          {entry.current_streak} day streak
+                          <TrendingUp className="h-4 w-4" />
+                          {entry.tasks_completed} tasks
                         </span>
-                      )}
-                      {entry.badges_count > 0 && (
-                        <span className="flex items-center gap-1">
-                          <Trophy className="h-4 w-4 text-primary" />
-                          {entry.badges_count} badges
-                        </span>
-                      )}
-                    </div>
+                      </div>
                   </div>
                 </div>
                 <div className="text-right">
