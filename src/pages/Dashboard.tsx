@@ -446,27 +446,41 @@ const Dashboard = () => {
           />
 
           <TabsContent value="affiliate" className="space-y-4">
-            <Card className="p-6">
-              <h3 className="font-heading font-semibold text-lg mb-4">
-                Your Affiliate Link
-              </h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Share this link to earn commissions on verified conversions
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={affiliateLink}
-                  readOnly
-                  className="flex-1 px-4 py-2 bg-secondary rounded-2xl text-sm"
-                />
-                <Button
-                  size="icon"
-                  onClick={copyToClipboard}
-                  className="bg-primary hover:bg-primary/90 rounded-2xl"
-                >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
+            <Card className="relative overflow-hidden p-6">
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-accent/5 to-secondary/5 opacity-50" />
+              <div className="relative">
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <h3 className="font-heading font-semibold text-2xl mb-2">Affiliate Program</h3>
+                    <p className="text-sm text-muted-foreground">Exciting rewards coming your way!</p>
+                  </div>
+                  <Badge variant="secondary" className="text-xs px-3 py-1.5 font-semibold">
+                    Coming Soon
+                  </Badge>
+                </div>
+                
+                <div className="space-y-4">
+                  <div className="bg-muted/50 rounded-lg p-6 text-center space-y-2">
+                    <p className="text-lg font-medium">Share & Earn Program</p>
+                    <p className="text-sm text-muted-foreground">
+                      Our affiliate program is launching soon! Get ready to earn bonus rewards by inviting friends.
+                    </p>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    <div className="bg-card/50 p-4 rounded-lg border border-border/50 text-center">
+                      <p className="font-semibold mb-1">📊 Track Referrals</p>
+                      <p className="text-muted-foreground text-xs">Monitor your affiliate performance</p>
+                    </div>
+                    <div className="bg-card/50 p-4 rounded-lg border border-border/50 text-center">
+                      <p className="font-semibold mb-1">💰 Earn Bonuses</p>
+                      <p className="text-muted-foreground text-xs">Get rewarded for each conversion</p>
+                    </div>
+                    <div className="bg-card/50 p-4 rounded-lg border border-border/50 text-center">
+                      <p className="font-semibold mb-1">🎁 Special Perks</p>
+                      <p className="text-muted-foreground text-xs">Unlock exclusive benefits</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </Card>
           </TabsContent>
