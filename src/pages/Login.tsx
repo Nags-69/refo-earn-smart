@@ -8,6 +8,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Phone } from "lucide-react";
+import { z } from "zod";
+
+const emailSchema = z.object({
+  email: z.string().email("Invalid email format").max(255, "Email too long"),
+  password: z.string().min(8, "Password must be at least 8 characters").max(128, "Password too long")
+});
+
+const phoneSchema = z.string().regex(/^\+[1-9]\d{1,14}$/, "Invalid phone format (use +country code)");
+
+const otpSchema = z.string().length(6, "OTP must be 6 digits").regex(/^\d{6}$/, "OTP must contain only digits");
 
 const Login = () => {
   const [loading, setLoading] = useState(false);
@@ -22,6 +32,19 @@ const Login = () => {
   const handleEmailAuth = async (isSignUp: boolean) => {
     try {
       setLoading(true);
+      
+      // Validate input
+      const result = emailSchema.safeParse({ email, password });
+      if (!result.success) {
+        toast({
+          title: "Validation Error",
+          description: result.error.errors[0].message,
+          variant: "destructive"
+        });
+        setLoading(false);
+        return;
+      }
+      
       if (isSignUp) {
         const { error } = await supabase.auth.signUp({
           email,
@@ -57,7 +80,20 @@ const Login = () => {
   const handlePhoneAuth = async () => {
     try {
       setLoading(true);
+      
       if (!otpSent) {
+        // Validate phone number
+        const phoneResult = phoneSchema.safeParse(phone);
+        if (!phoneResult.success) {
+          toast({
+            title: "Validation Error",
+            description: phoneResult.error.errors[0].message,
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+        
         const { error } = await supabase.auth.signInWithOtp({
           phone,
         });
@@ -68,6 +104,18 @@ const Login = () => {
           description: "Check your phone for the verification code.",
         });
       } else {
+        // Validate OTP
+        const otpResult = otpSchema.safeParse(otp);
+        if (!otpResult.success) {
+          toast({
+            title: "Validation Error",
+            description: otpResult.error.errors[0].message,
+            variant: "destructive"
+          });
+          setLoading(false);
+          return;
+        }
+        
         const { error } = await supabase.auth.verifyOtp({
           phone,
           token: otp,
