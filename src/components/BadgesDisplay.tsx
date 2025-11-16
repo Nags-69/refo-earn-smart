@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Award, Crown, Flame, Zap, Star, DollarSign, TrendingUp, Gem, Lock } from "lucide-react";
+import { Trophy, Award, Crown, Flame, Zap, Star, DollarSign, TrendingUp, Gem } from "lucide-react";
 
 interface BadgeData {
   id: string;
@@ -102,32 +102,6 @@ const BadgesDisplay = () => {
         </div>
       )}
 
-      {/* Locked Badges */}
-      {lockedBadges.length > 0 && (
-        <div>
-          <h3 className="text-sm font-medium text-muted-foreground mb-3">Locked</h3>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {lockedBadges.map((badge) => {
-              const IconComponent = iconMap[badge.icon] || Trophy;
-              return (
-                <Card 
-                  key={badge.id} 
-                  className="p-4 text-center bg-muted/30 opacity-60"
-                >
-                  <div className="flex justify-center mb-2">
-                    <div className="p-3 bg-muted rounded-2xl relative">
-                      <IconComponent className="h-8 w-8 text-muted-foreground" />
-                      <Lock className="h-4 w-4 absolute -top-1 -right-1 text-muted-foreground" />
-                    </div>
-                  </div>
-                  <h3 className="font-semibold text-sm mb-1">{badge.name}</h3>
-                  <p className="text-xs text-muted-foreground">{badge.description}</p>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

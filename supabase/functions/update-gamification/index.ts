@@ -118,7 +118,7 @@ async function checkAndAwardBadges(supabaseClient: any, userId: string) {
         .from('tasks')
         .select('*', { count: 'exact', head: true })
         .eq('user_id', userId)
-        .eq('status', 'completed');
+        .eq('status', 'verified');
 
       shouldAward = (count || 0) >= badge.requirement_value;
     } else if (badge.requirement_type === 'streak_days') {
