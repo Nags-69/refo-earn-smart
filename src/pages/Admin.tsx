@@ -18,7 +18,15 @@ const Admin = () => {
   const [pendingVerificationCount, setPendingVerificationCount] = useState(0);
 
   useEffect(() => {
-    fetchPendingCount();
+    let mounted = true;
+    
+    const loadPendingCount = async () => {
+      if (mounted) {
+        await fetchPendingCount();
+      }
+    };
+    
+    loadPendingCount();
 
     // Set up real-time subscription for task updates
     const channel = supabase
@@ -31,12 +39,15 @@ const Admin = () => {
           table: 'tasks'
         },
         () => {
-          fetchPendingCount();
+          if (mounted) {
+            fetchPendingCount();
+          }
         }
       )
       .subscribe();
 
     return () => {
+      mounted = false;
       supabase.removeChannel(channel);
     };
   }, []);

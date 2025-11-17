@@ -2,8 +2,8 @@ import { ReactNode, useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthModal } from "./AuthModal";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 interface AdminRouteProps {
   children: ReactNode;
@@ -12,40 +12,26 @@ interface AdminRouteProps {
 export const AdminRoute = ({ children }: AdminRouteProps) => {
   const { user, isLoading } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const { isAdmin, loading: adminLoading } = useAdminCheck(user?.id);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     if (!isLoading && !user) {
       setShowAuthModal(true);
-    } else if (user) {
-      checkAdminRole();
     }
   }, [user, isLoading]);
 
-  const checkAdminRole = async () => {
-    if (!user) return;
-
-    const { data, error } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin")
-      .single();
-
-    if (error || !data) {
-      setIsAdmin(false);
+  useEffect(() => {
+    if (!adminLoading && isAdmin === false && user) {
       toast({
         title: "Access Denied",
         description: "You don't have permission to access this page.",
         variant: "destructive",
       });
       navigate("/");
-    } else {
-      setIsAdmin(true);
     }
-  };
+  }, [isAdmin, adminLoading, user, navigate, toast]);
 
   const handleAuthSuccess = () => {
     setShowAuthModal(false);
@@ -58,7 +44,7 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
     }
   };
 
-  if (isLoading || isAdmin === null) {
+  if (isLoading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
