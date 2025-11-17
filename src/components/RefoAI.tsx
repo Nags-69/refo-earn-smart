@@ -117,6 +117,8 @@ const RefoAI = () => {
   useEffect(() => {
     if (!chatId || !isOpen) return;
     
+    let mounted = true;
+    
     console.log('RefoAI: Setting up realtime for chat:', chatId);
     const channel = supabase
       .channel(`refo-ai-messages-${chatId}`)
@@ -134,7 +136,7 @@ const RefoAI = () => {
           
           // Only add messages from admin in ADMIN_CONTROLLED mode
           // AI messages are already added during streaming, user messages are added optimistically
-          if (newMsg.sender === 'admin' && newMsg.responder_mode === 'ADMIN') {
+          if (mounted && newMsg.sender === 'admin' && newMsg.responder_mode === 'ADMIN') {
             console.log('RefoAI: Adding admin message to UI');
             setMessages((prev) => [
               ...prev,
@@ -150,6 +152,7 @@ const RefoAI = () => {
       });
 
     return () => {
+      mounted = false;
       console.log('RefoAI: Cleaning up realtime subscription');
       supabase.removeChannel(channel);
     };
