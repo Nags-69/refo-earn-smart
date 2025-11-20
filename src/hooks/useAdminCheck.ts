@@ -18,12 +18,15 @@ export const useAdminCheck = (userId: string | undefined) => {
       }
 
       try {
+        console.log("Checking admin role for user:", userId);
         const { data, error } = await supabase
           .from("user_roles")
           .select("role")
           .eq("user_id", userId)
           .eq("role", "admin")
           .maybeSingle();
+
+        console.log("Admin check result:", { data, error });
 
         if (mounted) {
           setIsAdmin(!error && !!data);
