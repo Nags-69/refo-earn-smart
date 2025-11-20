@@ -1,0 +1,833 @@
+================================================================================
+                        REFO PLATFORM - COMPLETE BLUEPRINT
+================================================================================
+
+PROJECT OVERVIEW
+================================================================================
+Refo is a full-stack referral and offer rewards platform that enables users to 
+complete tasks, earn rewards, request payouts, and track their progress through 
+gamification features. The platform includes a comprehensive admin panel for 
+managing users, offers, and payouts.
+
+TECHNOLOGY STACK
+================================================================================
+Frontend:
+  - React 18.3.1
+  - TypeScript
+  - Vite (Build Tool)
+  - React Router v6.30.1
+  - TanStack Query v5.83.0 (State Management)
+
+UI/Design:
+  - Tailwind CSS
+  - shadcn/ui Components
+  - Lucide React Icons
+  - Custom Design System with Semantic Tokens
+
+Backend (Lovable Cloud - Supabase):
+  - PostgreSQL Database
+  - Supabase Auth
+  - Row Level Security (RLS)
+  - Edge Functions
+  - Real-time Subscriptions
+  - Storage Buckets
+
+AI Integration:
+  - Lovable AI Gateway
+  - Gemini 2.5 Models (Pro/Flash/Flash-Lite)
+  - GPT-5 Models (Standard/Mini/Nano)
+
+DESIGN SYSTEM & THEME
+================================================================================
+Color Palette (HSL):
+  - Primary: Brand color for main actions and emphasis
+  - Primary Foreground: Text on primary surfaces
+  - Secondary: Secondary UI elements
+  - Background: Main background color
+  - Foreground: Primary text color
+  - Card: Card background
+  - Border: Border color
+  - Muted: Muted surfaces
+  - Accent: Accent color for highlights
+  - Destructive: Error/danger states
+
+Typography:
+  - Font Family: System fonts with fallbacks
+  - Responsive font sizes
+  - Semantic heading hierarchy
+
+Layout:
+  - Mobile-first responsive design
+  - Bottom navigation for mobile
+  - Sidebar navigation for desktop
+  - Consistent spacing using Tailwind spacing scale
+
+Components:
+  - All components use semantic tokens from index.css
+  - No direct color values in components
+  - Consistent button variants (default, destructive, outline, secondary, ghost, link)
+  - Card-based layouts
+  - Toast notifications for user feedback
+
+CORE USER FEATURES
+================================================================================
+
+1. AUTHENTICATION SYSTEM
+   - Email/Password signup and login
+   - Supabase Auth integration
+   - Auto-confirm email signups enabled
+   - Protected routes for authenticated users
+   - Profile creation on signup
+   - Wallet creation on signup
+
+2. DASHBOARD
+   - Available offers display
+   - Task status tracking
+   - Quick stats overview
+   - Badge display
+   - Responsive card layouts
+   - Real-time updates
+
+3. OFFERS SYSTEM
+   - Browse available offers
+   - View offer details (title, description, reward, instructions)
+   - Logo/icon display
+   - Category filtering
+   - Public/Private offer visibility
+   - Play Store links for app offers
+   - Complete offers and submit proof
+
+4. TASK MANAGEMENT
+   - Submit tasks for offers
+   - Upload proof images (multiple images supported)
+   - Track task status (pending, completed, verified, rejected)
+   - View rejection reasons
+   - Automatic cleanup of old proof images (30 days)
+
+5. WALLET SYSTEM
+   - Total balance tracking
+   - Pending balance tracking
+   - Transaction history
+   - Real-time balance updates
+   - Secure balance management
+
+6. PAYOUT SYSTEM
+   - Request payouts from total balance
+   - Two payout methods:
+     * UPI (UPI ID required)
+     * Bank Transfer (Account Number, IFSC Code, Account Holder Name)
+   - Minimum payout threshold
+   - Payout status tracking (pending, completed, rejected)
+   - View rejection reasons
+   - Transaction history
+
+7. LEADERBOARD
+   - User rankings by earnings
+   - Display top performers
+   - User position tracking
+   - Total earnings display
+   - Responsive design for mobile/desktop
+
+8. GAMIFICATION SYSTEM
+   Badges:
+   - 3 Apps Completed: Complete 3 verified tasks
+   - 5 Apps Verified: Complete 5 verified tasks
+   - 10 Apps Verified: Complete 10 verified tasks
+   - Badge display on profile and dashboard
+   - Automatic badge awarding via edge function
+
+9. AI CHAT (RefoAI)
+   - Interactive AI assistant
+   - Context-aware responses
+   - Chat history persistence
+   - Real-time message updates
+   - Support and guidance
+   - Multiple AI model support
+
+10. AFFILIATE SYSTEM
+    - Unique affiliate code generation
+    - Click tracking
+    - Conversion tracking
+    - Shareable affiliate links
+    - Performance metrics
+
+11. PROFILE MANAGEMENT
+    - View and edit username
+    - Email display
+    - Phone number (optional)
+    - Badge showcase
+    - Account statistics
+
+ADMIN FEATURES
+================================================================================
+
+1. OVERVIEW DASHBOARD
+   Statistics Display:
+   - Total Users count
+   - Total Referrals count
+   - Pending Tasks count
+   - Completed Payouts amount
+   - Visual cards with icons
+   - Real-time data updates
+
+2. USERS MANAGEMENT
+   - View all registered users
+   - User details (username, email, phone, join date)
+   - User verification status
+   - Search and filter users
+   - User activity tracking
+   - Wallet balance overview per user
+
+3. OFFERS MANAGEMENT
+   Features:
+   - Create new offers
+   - Edit existing offers
+   - Delete offers
+   - Set offer status (active/inactive)
+   - Configure offer details:
+     * Title
+     * Description
+     * Reward amount
+     * Category
+     * Instructions (multi-step)
+     * Logo/icon upload
+     * Play Store URL
+     * Public/Private visibility
+   - Upload offer logos to storage
+   - Preview offers before publishing
+
+4. REFERRALS MANAGEMENT (Task Verification)
+   - View all submitted tasks
+   - Filter by status (pending, completed, verified, rejected)
+   - View task proof images
+   - Approve tasks:
+     * Update task status to verified
+     * Credit user wallet
+     * Create transaction record
+     * Update gamification (badges, streaks)
+   - Reject tasks:
+     * Provide rejection reason
+     * Update task status
+     * Notify user
+   - Real-time task updates
+   - Pending verification badge counter
+   - Bulk actions support
+
+5. PAYOUTS MANAGEMENT
+   - View all payout requests
+   - Filter by status (pending, completed, rejected)
+   - View payout details:
+     * Amount
+     * Payment method (UPI/Bank)
+     * User information
+     * Request date
+   - Process payouts:
+     * Approve payout
+     * Update wallet balance
+     * Create transaction record
+     * Mark as completed
+   - Reject payouts:
+     * Provide rejection reason
+     * Restore pending balance
+     * Notify user
+   - Payment information display:
+     * UPI ID (for UPI payments)
+     * Bank details (for bank transfers)
+
+6. AFFILIATES MANAGEMENT
+   - View all affiliate links
+   - Track affiliate performance:
+     * Click count
+     * Conversion count
+     * Conversion rate
+   - User affiliate code display
+   - Performance analytics
+   - Link management
+
+7. CHAT CONTROL
+   - View all user chats
+   - Monitor chat activity
+   - Chat history access
+   - User support management
+   - Active responder mode tracking
+   - Chat timestamps
+   - Message filtering
+
+8. ADMIN SETTINGS
+   - System configuration
+   - Platform settings
+   - Feature toggles
+   - Maintenance mode
+   - General app settings
+
+ADMIN ACCESS CONTROL
+   - Role-based access (admin role required)
+   - Separate user_roles table
+   - Security definer function (has_role)
+   - Protected admin routes
+   - Server-side role verification
+   - No client-side role storage
+
+DATABASE SCHEMA
+================================================================================
+
+1. PROFILES TABLE
+   Columns:
+   - id (uuid, primary key, references auth.users)
+   - username (text, nullable)
+   - email (text, nullable)
+   - phone (text, nullable)
+   - is_verified (boolean, default false)
+   - created_at (timestamp)
+   - updated_at (timestamp)
+   
+   RLS Policies:
+   - Users can view own profile
+   - Users can update own profile
+   - Users can insert own profile
+   - Admins can view all profiles
+
+2. USER_ROLES TABLE
+   Columns:
+   - id (uuid, primary key)
+   - user_id (uuid, references auth.users)
+   - role (enum: admin, user)
+   - created_at (timestamp)
+   
+   RLS Policies:
+   - Users can view their own roles
+   - Admins can view all roles
+   - Admins can manage roles
+   
+   Security Function:
+   - has_role(user_id, role) - Security definer function
+
+3. WALLET TABLE
+   Columns:
+   - id (uuid, primary key)
+   - user_id (uuid, references auth.users)
+   - total_balance (numeric, default 0)
+   - pending_balance (numeric, default 0)
+   - created_at (timestamp)
+   - updated_at (timestamp)
+   
+   RLS Policies:
+   - Users can view own wallet
+   - Admins can view all wallets
+   - Admins can update wallets
+
+4. OFFERS TABLE
+   Columns:
+   - id (uuid, primary key)
+   - title (text, not null)
+   - description (text)
+   - reward (numeric, not null)
+   - category (text)
+   - logo_url (text)
+   - play_store_url (text)
+   - instructions (text array)
+   - status (text, default 'active')
+   - is_public (boolean, default true)
+   - created_at (timestamp)
+   
+   RLS Policies:
+   - Public offers viewable by all authenticated users
+   - Admins can view all offers
+   - Admins can manage offers
+
+5. TASKS TABLE
+   Columns:
+   - id (uuid, primary key)
+   - user_id (uuid, references auth.users)
+   - offer_id (uuid, references offers)
+   - status (text, default 'pending')
+   - proof_url (text array)
+   - proof_uploaded_at (timestamp)
+   - rejection_reason (text)
+   - created_at (timestamp)
+   - updated_at (timestamp)
+   
+   RLS Policies:
+   - Users can view own tasks
+   - Users can create own tasks
+   - Users can update own tasks
+   - Admins can view all tasks
+   - Admins can update tasks
+   
+   Statuses: pending, completed, verified, rejected
+
+6. TRANSACTIONS TABLE
+   Columns:
+   - id (uuid, primary key)
+   - user_id (uuid, references auth.users)
+   - amount (numeric, not null)
+   - type (text, not null)
+   - description (text)
+   - status (text, default 'pending')
+   - created_at (timestamp)
+   
+   Types: credit, debit, payout
+   
+   RLS Policies:
+   - Users can view own transactions
+   - Admins can view all transactions
+   - Admins can create transactions
+
+7. PAYOUT_REQUESTS TABLE
+   Columns:
+   - id (uuid, primary key)
+   - user_id (uuid, references auth.users)
+   - amount (numeric, not null)
+   - payout_method (text, not null)
+   - upi_id (text, nullable)
+   - bank_account_number (text, nullable)
+   - bank_ifsc_code (text, nullable)
+   - bank_account_holder (text, nullable)
+   - status (text, default 'pending')
+   - rejection_reason (text)
+   - created_at (timestamp)
+   - processed_at (timestamp)
+   
+   Methods: upi, bank_transfer
+   Statuses: pending, completed, rejected
+   
+   RLS Policies:
+   - Users can create own payout requests
+   - Users can view own payout requests
+   - Admins can view all payout requests
+   - Admins can update payout requests
+
+8. BADGES TABLE
+   Columns:
+   - id (uuid, primary key)
+   - name (text, not null)
+   - description (text, not null)
+   - icon (text, not null)
+   - requirement_type (text, not null)
+   - requirement_value (integer, not null)
+   - created_at (timestamp)
+   
+   Current Badges:
+   - 3 Apps Completed (verified_tasks, 3)
+   - 5 Apps Verified (verified_tasks, 5)
+   - 10 Apps Verified (verified_tasks, 10)
+   
+   RLS Policies:
+   - Anyone can view badges
+   - Admins can manage badges
+
+9. USER_BADGES TABLE
+   Columns:
+   - id (uuid, primary key)
+   - user_id (uuid, references auth.users)
+   - badge_id (uuid, references badges)
+   - earned_at (timestamp)
+   
+   RLS Policies:
+   - Users can view own badges
+   - Users can view all user badges
+   - System can insert badges
+
+10. AFFILIATE_LINKS TABLE
+    Columns:
+    - id (uuid, primary key)
+    - user_id (uuid, references auth.users)
+    - unique_code (text, not null)
+    - clicks (integer, default 0)
+    - conversions (integer, default 0)
+    - created_at (timestamp)
+    
+    RLS Policies:
+    - Users can view own affiliate links
+    - Users can create own affiliate links
+    - Admins can view all affiliate links
+
+11. CHATS TABLE
+    Columns:
+    - chat_id (uuid, primary key)
+    - user_id (uuid, references auth.users)
+    - active_responder (text, default 'AI')
+    - created_at (timestamp)
+    - last_updated (timestamp)
+    
+    RLS Policies:
+    - Users can view own chats
+    - Admins can view all chats
+    - Users can create own chats
+    - Users can update own chats
+    - Admins can update all chats
+
+12. CHAT_MESSAGES TABLE
+    Columns:
+    - id (uuid, primary key)
+    - chat_id (uuid, references chats)
+    - user_id (uuid, references auth.users)
+    - sender (text, not null)
+    - message (text, not null)
+    - responder_mode (text, not null)
+    - timestamp (timestamp)
+    
+    RLS Policies:
+    - Users can view own messages
+    - Admins can view all messages
+    - Users can create own messages
+    - Admins can create any messages
+    - Admins can delete messages
+
+13. CATEGORIES TABLE
+    Columns:
+    - id (uuid, primary key)
+    - name (text, not null)
+    - created_at (timestamp)
+    
+    RLS Policies:
+    - Anyone can view categories
+    - Admins can manage categories
+
+14. TASK_CLEANUP_LOG TABLE
+    Columns:
+    - id (uuid, primary key)
+    - last_cleanup_at (timestamp)
+    - tasks_cleaned (integer)
+    
+    Purpose: Track automated cleanup of old task proofs
+    
+    RLS Policies:
+    - Admins can view cleanup log
+
+EDGE FUNCTIONS (Serverless Backend Logic)
+================================================================================
+
+1. UPDATE-GAMIFICATION
+   Trigger: Task verification
+   Purpose: Update user gamification data
+   
+   Operations:
+   - Award badges based on verified task count
+   - Check badge requirements
+   - Insert user_badges records
+   - Update user statistics
+   
+   Badge Logic:
+   - Count verified tasks for user
+   - Check each badge requirement
+   - Award badge if requirement met and not already earned
+   - Handle multiple badge awards in single operation
+
+2. REFO-CHAT
+   Trigger: User chat message
+   Purpose: AI-powered chat responses
+   
+   Operations:
+   - Receive user messages
+   - Load chat history
+   - Send to Lovable AI Gateway
+   - Support multiple AI models
+   - Store AI responses
+   - Real-time message updates
+   
+   Supported Models:
+   - google/gemini-2.5-pro
+   - google/gemini-2.5-flash
+   - google/gemini-2.5-flash-lite
+   - openai/gpt-5
+   - openai/gpt-5-mini
+   - openai/gpt-5-nano
+
+3. CLEANUP-OLD-PROOFS
+   Trigger: Scheduled (cron)
+   Purpose: Delete old task proof images
+   
+   Operations:
+   - Find tasks with proofs older than 30 days
+   - Delete proof images from storage
+   - Update task records
+   - Log cleanup operation
+   - Free up storage space
+
+STORAGE BUCKETS
+================================================================================
+
+1. OFFER-LOGOS
+   Purpose: Store offer logo images
+   Access: Public read
+   Upload: Admin only
+   
+2. TASK-PROOFS
+   Purpose: Store task proof images
+   Access: Private (user and admin only)
+   Upload: Users only (own proofs)
+   Cleanup: Automatic after 30 days
+
+REAL-TIME FEATURES
+================================================================================
+
+1. Task Updates
+   - Real-time subscription on tasks table
+   - Admin panel updates pending count automatically
+   - User dashboard shows status changes instantly
+
+2. Chat Messages
+   - Real-time chat message delivery
+   - Instant AI responses
+   - Message history sync
+
+3. Wallet Updates
+   - Real-time balance changes
+   - Instant transaction notifications
+
+SECURITY FEATURES
+================================================================================
+
+1. Authentication
+   - Supabase Auth with JWT tokens
+   - Email/password authentication
+   - Secure session management
+   - Auto-refresh tokens
+   - Protected routes
+
+2. Row Level Security (RLS)
+   - All tables have RLS enabled
+   - Users can only access their own data
+   - Admins have elevated permissions
+   - Security definer functions for role checks
+
+3. Role-Based Access Control
+   - Separate user_roles table
+   - has_role() security definer function
+   - Server-side role verification
+   - No client-side role manipulation
+
+4. Input Validation
+   - Form validation with react-hook-form + zod
+   - File upload restrictions
+   - SQL injection prevention (parameterized queries)
+   - XSS prevention (React default escaping)
+
+5. API Security
+   - Edge functions require authentication
+   - JWT token verification
+   - Rate limiting (Supabase default)
+   - CORS configuration
+
+6. Storage Security
+   - Private buckets for sensitive data
+   - Public buckets for public assets only
+   - File size limits
+   - Allowed MIME types
+
+PERFORMANCE OPTIMIZATIONS
+================================================================================
+
+1. Code Optimization
+   - Memory leak prevention (cleanup on unmount)
+   - Optimized admin checks (custom hook)
+   - React Router v7 future flags
+   - Proper useEffect dependencies
+   - Mounted flags for async operations
+
+2. Query Optimization
+   - TanStack Query for caching
+   - Optimistic updates
+   - Deduplication of requests
+   - Stale-while-revalidate strategy
+
+3. Component Optimization
+   - Lazy loading (potential improvement)
+   - Code splitting (potential improvement)
+   - Memoization where needed
+   - Efficient re-renders
+
+4. Database Optimization
+   - Indexed columns for fast queries
+   - Efficient RLS policies
+   - Connection pooling (Supabase default)
+   - Prepared statements
+
+ROUTING STRUCTURE
+================================================================================
+
+Public Routes:
+  / - Landing/Login page
+
+Protected Routes (Authenticated Users):
+  /dashboard - Main dashboard with offers
+  /wallet - Wallet and transaction history
+  /leaderboard - User rankings
+  /profile - User profile and settings
+
+Admin Routes (Admin Role Required):
+  /admin - Admin panel with sections:
+    - Overview
+    - Users Management
+    - Offers Management
+    - Referrals Management (Task Verification)
+    - Payouts Management
+    - Affiliates Management
+    - Chat Control
+    - Settings
+
+Error Routes:
+  * - 404 Not Found page
+
+MOBILE RESPONSIVENESS
+================================================================================
+
+Mobile Navigation:
+  - Bottom navigation bar with 4 main items
+  - Fixed position at bottom
+  - Icon + label format
+  - Active state indication
+
+Tablet/Desktop Navigation:
+  - Top header bar
+  - Dropdown menus
+  - Sidebar for admin panel
+
+Responsive Breakpoints:
+  - Mobile: < 768px
+  - Tablet: 768px - 1024px
+  - Desktop: > 1024px
+
+Mobile-Specific Features:
+  - Touch-optimized buttons
+  - Swipeable components (potential)
+  - Mobile-friendly forms
+  - Responsive tables (scroll/stack)
+  - Collapsible sections
+
+DEPLOYMENT & HOSTING
+================================================================================
+
+Deployment Options:
+
+1. Lovable Platform (Recommended):
+   - Click "Publish" button
+   - Automatic frontend deployment
+   - Edge functions auto-deploy
+   - Custom domain support
+   - SSL certificates included
+   - CDN distribution
+
+2. External Hosting (Vercel/Netlify):
+   - Build command: npm run build
+   - Output directory: dist
+   - Environment variables required
+   - Edge functions need separate deployment
+
+Environment Variables Required:
+  - VITE_SUPABASE_URL
+  - VITE_SUPABASE_PUBLISHABLE_KEY
+  - VITE_SUPABASE_PROJECT_ID
+
+Custom Domain Setup:
+  - A Record: points to Lovable's IP
+  - TXT Record: for domain verification
+  - DNS propagation time: up to 48 hours
+
+PRODUCTION READINESS CHECKLIST
+================================================================================
+
+✓ Authentication configured and tested
+✓ RLS policies enabled on all tables
+✓ Admin roles properly configured
+✓ Edge functions deployed
+✓ Storage buckets configured
+✓ Mobile responsive design
+✓ Error handling implemented
+✓ Memory leaks fixed
+✓ Performance optimizations applied
+✓ Real-time features tested
+✓ Toast notifications for user feedback
+
+Recommended Before Launch:
+  □ Enable Auth password protection (leaked passwords)
+  □ Set up custom domain
+  □ Configure email templates
+  □ Add error boundaries
+  □ Implement PWA features
+  □ Add analytics tracking
+  □ Create backup strategy
+  □ Set up monitoring
+  □ Perform security audit
+  □ Load testing
+  □ Create admin user account
+
+FUTURE ENHANCEMENTS
+================================================================================
+
+Potential Features:
+  - Push notifications
+  - Multi-language support
+  - Dark/Light theme toggle
+  - Advanced analytics dashboard
+  - Social media integration
+  - Email notifications
+  - SMS notifications
+  - Advanced filtering and search
+  - Data export functionality
+  - Bulk operations
+  - API for third-party integrations
+  - Mobile app (React Native)
+  - Two-factor authentication
+  - Social login (Google, Facebook)
+  - Payment gateway integration
+
+MAINTENANCE & MONITORING
+================================================================================
+
+Regular Tasks:
+  - Monitor database size
+  - Review error logs
+  - Check edge function performance
+  - Update dependencies
+  - Review security policies
+  - Backup database
+  - Monitor user growth
+  - Track payout processing times
+  - Review task verification times
+
+Monitoring Metrics:
+  - User signup rate
+  - Task completion rate
+  - Task verification rate
+  - Payout processing time
+  - Average task value
+  - User retention rate
+  - Daily active users
+  - Error rates
+  - API response times
+  - Storage usage
+
+SUPPORT & DOCUMENTATION
+================================================================================
+
+User Documentation:
+  - How to complete offers
+  - How to submit task proof
+  - How to request payouts
+  - Badge requirements
+  - Affiliate program guide
+
+Admin Documentation:
+  - How to create offers
+  - How to verify tasks
+  - How to process payouts
+  - User management guide
+  - System settings guide
+
+Technical Documentation:
+  - Database schema
+  - API endpoints
+  - Edge functions
+  - RLS policies
+  - Security guidelines
+
+================================================================================
+                              END OF BLUEPRINT
+================================================================================
+
+Last Updated: 2025
+Version: 1.0.0
+Platform: Refo - Referral & Rewards Platform
+Technology: React + TypeScript + Supabase (Lovable Cloud)
