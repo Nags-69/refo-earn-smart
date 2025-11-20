@@ -10,8 +10,9 @@ import ChatControl from "@/components/admin/ChatControl";
 import AdminSettings from "@/components/admin/AdminSettings";
 import AffiliatesManagement from "@/components/admin/AffiliatesManagement";
 import UsersManagement from "@/components/admin/UsersManagement";
+import { RolesManagement } from "@/components/admin/RolesManagement";
 
-type AdminSection = "overview" | "offers" | "referrals" | "payouts" | "chat" | "affiliates" | "users" | "settings";
+type AdminSection = "overview" | "offers" | "referrals" | "payouts" | "chat" | "affiliates" | "users" | "roles" | "settings";
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
@@ -71,6 +72,7 @@ const Admin = () => {
     { id: "payouts" as AdminSection, label: "Payouts", icon: CreditCard },
     { id: "affiliates" as AdminSection, label: "Affiliates", icon: Link2 },
     { id: "chat" as AdminSection, label: "Chat Control", icon: MessageSquare },
+    { id: "roles" as AdminSection, label: "Roles", icon: UserCog },
     { id: "settings" as AdminSection, label: "Settings", icon: Settings },
   ];
 
@@ -90,6 +92,8 @@ const Admin = () => {
         return <AffiliatesManagement />;
       case "chat":
         return <ChatControl />;
+      case "roles":
+        return <RolesManagement />;
       case "settings":
         return <AdminSettings />;
       default:
