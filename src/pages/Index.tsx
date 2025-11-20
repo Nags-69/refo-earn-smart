@@ -8,12 +8,14 @@ import { AuthModal } from "@/components/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Star, Shield, ArrowRight } from "lucide-react";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const Index = () => {
   const navigate = useNavigate();
   const [offers, setOffers] = useState([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
+  const { isAdmin } = useAdminCheck(user?.id);
 
   useEffect(() => {
     loadOffers();
@@ -49,6 +51,21 @@ const Index = () => {
         }}
       />
       <div className="min-h-screen bg-background pb-24">
+        {/* Admin Button for Desktop */}
+        {isAdmin && (
+          <div className="fixed top-4 right-4 z-50 hidden md:block">
+            <Button
+              onClick={() => navigate("/admin")}
+              variant="outline"
+              size="sm"
+              className="bg-background/95 backdrop-blur-sm border-primary/20 hover:bg-primary/10"
+            >
+              <Shield className="h-4 w-4 mr-2" />
+              Admin Panel
+            </Button>
+          </div>
+        )}
+        
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-accent to-secondary">
           <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
