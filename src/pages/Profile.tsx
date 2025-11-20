@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import BottomNav from "@/components/BottomNav";
 import BadgesDisplay from "@/components/BadgesDisplay";
+import { AvatarUpload } from "@/components/AvatarUpload";
 
 const Profile = () => {
   const { user, signOut } = useAuth();
@@ -94,9 +95,12 @@ const Profile = () => {
         {/* Profile Card */}
         <Card className="p-6 mb-6">
           <div className="flex flex-col sm:flex-row items-start gap-6">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-primary/20 rounded-full flex items-center justify-center flex-shrink-0">
-              <User className="h-10 w-10 text-primary" />
-            </div>
+            <AvatarUpload
+              userId={user?.id || ""}
+              currentAvatarUrl={profile?.avatar_url}
+              onAvatarUpdate={loadProfile}
+              size="lg"
+            />
             
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
