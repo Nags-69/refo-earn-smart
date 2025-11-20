@@ -21,6 +21,13 @@ const Index = () => {
     loadOffers();
   }, []);
 
+  // Redirect authenticated users to dashboard
+  useEffect(() => {
+    if (user) {
+      navigate("/dashboard");
+    }
+  }, [user, navigate]);
+
   const loadOffers = async () => {
     const { data } = await supabase
       .from("offers")
