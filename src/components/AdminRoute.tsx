@@ -23,7 +23,10 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
   }, [user, isLoading]);
 
   useEffect(() => {
+    console.log("AdminRoute state:", { isAdmin, adminLoading, user: user?.id });
+    
     if (!adminLoading && isAdmin === false && user) {
+      console.log("Access denied - redirecting to home");
       toast({
         title: "Access Denied",
         description: "You don't have permission to access this page.",
@@ -70,7 +73,8 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
     );
   }
 
-  if (!isAdmin) {
+  if (isAdmin === false) {
+    console.log("Rendering access denied screen");
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
@@ -79,6 +83,8 @@ export const AdminRoute = ({ children }: AdminRouteProps) => {
       </div>
     );
   }
+
+  console.log("Admin access granted, rendering children");
 
   return <>{children}</>;
 };
