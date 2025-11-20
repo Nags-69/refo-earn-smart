@@ -1,23 +1,29 @@
-import { Home, Wallet, LayoutDashboard, User, Trophy } from "lucide-react";
+import { Home, Wallet, LayoutDashboard, User, Trophy, Shield } from "lucide-react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { AuthModal } from "./AuthModal";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const BottomNav = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useAdminCheck(user?.id);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const navItems = [
+  const baseNavItems = [
     { icon: Home, label: "Home", path: "/", protected: false },
     { icon: LayoutDashboard, label: "Tasks", path: "/dashboard", protected: true },
     { icon: Trophy, label: "Ranks", path: "/leaderboard", protected: true },
     { icon: Wallet, label: "Wallet", path: "/wallet", protected: true },
     { icon: User, label: "Profile", path: "/profile", protected: true },
   ];
+
+  const navItems = isAdmin 
+    ? [...baseNavItems, { icon: Shield, label: "Admin", path: "/admin", protected: true }]
+    : baseNavItems;
 
   const handleNavClick = (item: typeof navItems[0], e: React.MouseEvent) => {
     if (item.protected && !user) {
