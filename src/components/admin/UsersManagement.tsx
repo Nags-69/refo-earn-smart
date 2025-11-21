@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import * as React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -165,8 +166,8 @@ const UsersManagement = () => {
               </TableHeader>
               <TableBody>
                 {users.map((user) => (
-                  <>
-                    <TableRow key={user.id}>
+                  <React.Fragment key={user.id}>
+                    <TableRow>
                       <TableCell className="font-medium">
                         {user.username || "Not set"}
                       </TableCell>
@@ -280,7 +281,7 @@ const UsersManagement = () => {
                         </TableCell>
                       </TableRow>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
