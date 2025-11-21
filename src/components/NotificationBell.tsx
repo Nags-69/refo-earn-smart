@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Notification {
   id: string;
+  user_id: string;
   title: string;
   message: string;
   type: string;
@@ -25,42 +26,58 @@ export const NotificationBell = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    fetchNotifications();
-    
-    // Subscribe to real-time updates
-    const channel = supabase
-      .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'notifications'
-        },
-        (payload) => {
-          console.log('Notification update:', payload);
-          if (payload.eventType === 'INSERT') {
-            setNotifications((prev) => [payload.new as Notification, ...prev]);
-            setUnreadCount((prev) => prev + 1);
-            
-            // Show toast for new notification
-            toast({
-              title: (payload.new as Notification).title,
-              description: (payload.new as Notification).message,
-            });
-          } else if (payload.eventType === 'UPDATE') {
-            setNotifications((prev) =>
-              prev.map((n) => (n.id === payload.new.id ? payload.new as Notification : n))
-            );
-            fetchNotifications(); // Refresh to update unread count
-          }
-        }
-      )
-      .subscribe();
+    const initializeNotifications = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    return () => {
-      supabase.removeChannel(channel);
+      await fetchNotifications();
+      
+      // Subscribe to real-time updates for current user's notifications only
+      const channel = supabase
+        .channel('user-notifications')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'notifications',
+            filter: `user_id=eq.${user.id}` // Only listen to current user's notifications
+          },
+          (payload) => {
+            console.log('Notification update:', payload);
+            const notification = payload.new as Notification;
+            
+            // Double-check the notification belongs to current user (extra security)
+            if (notification.user_id !== user.id) {
+              console.warn('Received notification for different user, ignoring');
+              return;
+            }
+
+            if (payload.eventType === 'INSERT') {
+              setNotifications((prev) => [notification, ...prev]);
+              setUnreadCount((prev) => prev + 1);
+              
+              // Show toast for new notification
+              toast({
+                title: notification.title,
+                description: notification.message,
+              });
+            } else if (payload.eventType === 'UPDATE') {
+              setNotifications((prev) =>
+                prev.map((n) => (n.id === notification.id ? notification : n))
+              );
+              fetchNotifications(); // Refresh to update unread count
+            }
+          }
+        )
+        .subscribe();
+
+      return () => {
+        supabase.removeChannel(channel);
+      };
     };
+
+    initializeNotifications();
   }, [toast]);
 
   const fetchNotifications = async () => {
