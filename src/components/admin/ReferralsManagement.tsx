@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Image } from "lucide-react";
@@ -24,6 +26,9 @@ const ReferralsManagement = () => {
   const [selectedProofs, setSelectedProofs] = useState<string[]>([]);
   const [currentProofIndex, setCurrentProofIndex] = useState(0);
   const [cleanupInfo, setCleanupInfo] = useState<{ last_cleanup_at: string } | null>(null);
+  const [rejectionDialogOpen, setRejectionDialogOpen] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string>("");
+  const [rejectionReason, setRejectionReason] = useState("");
   const { toast } = useToast();
 
   useEffect(() => {
@@ -93,13 +98,18 @@ const ReferralsManagement = () => {
     }
   };
 
-  const updateTaskStatus = async (taskId: string, newStatus: string) => {
+  const updateTaskStatus = async (taskId: string, newStatus: string, reason?: string) => {
     const task = tasks.find((t) => t.id === taskId);
     if (!task) return;
 
+    const updateData: any = { status: newStatus };
+    if (newStatus === "rejected" && reason) {
+      updateData.rejection_reason = reason;
+    }
+
     const { error } = await supabase
       .from("tasks")
-      .update({ status: newStatus })
+      .update(updateData)
       .eq("id", taskId);
 
     if (error) {
@@ -224,6 +234,7 @@ const ReferralsManagement = () => {
               taskStatus: "rejected",
               offerTitle: task.offer_title,
               reward: task.offer_reward,
+              rejectionReason: reason,
             },
           });
         } catch (emailError) {
@@ -235,6 +246,23 @@ const ReferralsManagement = () => {
     }
 
     fetchTasks();
+  };
+
+  const handleRejectClick = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    setRejectionReason("");
+    setRejectionDialogOpen(true);
+  };
+
+  const handleRejectConfirm = async () => {
+    if (!rejectionReason.trim()) {
+      toast({ title: "Please provide a reason for rejection", variant: "destructive" });
+      return;
+    }
+    await updateTaskStatus(selectedTaskId, "rejected", rejectionReason);
+    setRejectionDialogOpen(false);
+    setRejectionReason("");
+    setSelectedTaskId("");
   };
 
   return (
@@ -324,7 +352,7 @@ const ReferralsManagement = () => {
                           <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => updateTaskStatus(task.id, "rejected")}
+                            onClick={() => handleRejectClick(task.id)}
                           >
                             Reject
                           </Button>
@@ -383,6 +411,38 @@ const ReferralsManagement = () => {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={rejectionDialogOpen} onOpenChange={setRejectionDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Task</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="rejection-reason">Rejection Reason</Label>
+              <Textarea
+                id="rejection-reason"
+                placeholder="Explain why this task is being rejected..."
+                value={rejectionReason}
+                onChange={(e) => setRejectionReason(e.target.value)}
+                rows={4}
+                className="resize-none"
+              />
+              <p className="text-sm text-muted-foreground">
+                This reason will be sent to the user via email.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRejectionDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleRejectConfirm}>
+              Reject Task
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
