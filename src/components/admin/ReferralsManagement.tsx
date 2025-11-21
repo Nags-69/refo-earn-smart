@@ -107,6 +107,15 @@ const ReferralsManagement = () => {
       return;
     }
 
+    // Get user email for notification
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("email")
+      .eq("id", task.user_id)
+      .single();
+
+    const userEmail = profile?.email;
+
     // If verified, move pending amount to total balance
     if (newStatus === "verified") {
       // Check if transaction already exists (for completed tasks)
@@ -162,6 +171,22 @@ const ReferralsManagement = () => {
       }
 
       toast({ title: `Task verified! ₹${task.offer_reward} added to user wallet` });
+      
+      // Send verification email
+      if (userEmail) {
+        try {
+          await supabase.functions.invoke("send-task-notification", {
+            body: {
+              userEmail,
+              taskStatus: "completed",
+              offerTitle: task.offer_title,
+              reward: task.offer_reward,
+            },
+          });
+        } catch (emailError) {
+          console.error("Email notification error:", emailError);
+        }
+      }
     } else if (newStatus === "rejected") {
       // Remove pending transaction if exists
       await supabase
@@ -189,6 +214,22 @@ const ReferralsManagement = () => {
       }
 
       toast({ title: "Task rejected" });
+      
+      // Send rejection email
+      if (userEmail) {
+        try {
+          await supabase.functions.invoke("send-task-notification", {
+            body: {
+              userEmail,
+              taskStatus: "rejected",
+              offerTitle: task.offer_title,
+              reward: task.offer_reward,
+            },
+          });
+        } catch (emailError) {
+          console.error("Email notification error:", emailError);
+        }
+      }
     } else {
       toast({ title: `Task marked as ${newStatus}` });
     }
