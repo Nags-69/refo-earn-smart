@@ -2,26 +2,68 @@
 
 A full-stack referral and rewards platform built with React, TypeScript, and Supabase. Users can complete tasks, earn rewards, and request payouts.
 
+**🚀 Production-Ready | 📦 Complete with Migrations | 🔐 Security-First | 🎨 Beautiful UI**
+
+### Clone → Deploy in 30 Minutes
+
+This repository is **100% ready to deploy** to your own Supabase instance. All database tables, policies, functions, and triggers are included in migrations. Just follow the step-by-step setup guide below.
+
+**What you get:**
+- ✅ Complete database schema with 15 tables
+- ✅ 30+ RLS policies for security
+- ✅ 5 production edge functions
+- ✅ Google OAuth + Email/Phone auth support
+- ✅ Real-time notifications system
+- ✅ AI chatbot integration (Gemini)
+- ✅ Responsive UI with dark mode
+- ✅ Admin panel with role management
+
 ## ✨ Features
 
 ### 👥 User Features
-- 🔐 Secure authentication (Email, Phone OTP)
+- 🔐 Secure authentication (Email, Phone OTP, Google OAuth)
 - 📊 Personal dashboard with earnings tracking
 - 🎯 Browse and complete offers
 - 📸 Upload task completion proofs
-- 💰 Request and track payouts
+- 💰 Request and track payouts (UPI/Bank)
 - 🏆 Leaderboard with achievements
 - 🔥 Streak tracking and badges
-- 💬 AI-powered help chat
+- 💬 AI-powered help chat (Gemini)
+- 🔔 Real-time in-app notifications
 
 ### 👨‍💼 Admin Features
 - 📈 Comprehensive admin dashboard
-- 👤 User management
+- 👤 User management with role control
 - 📝 Offer creation and management
 - ✅ Task verification and approval
 - 💳 Payout processing
 - 📊 Analytics and overview
 - 🔧 System configuration
+- 👑 Owner privileges for role management
+
+### 🤖 What's Automated via Migrations
+
+**Database Setup (Zero Manual SQL)**
+- ✅ All 15 tables with proper structure
+- ✅ Row-Level Security policies (30+ policies)
+- ✅ Database functions (6 security-definer functions)
+- ✅ Database triggers (auto-create profiles, wallets)
+- ✅ Indexes for performance
+- ✅ Foreign key relationships
+- ✅ Enum types (app_role)
+
+**Auto-Created on User Signup**
+- ✅ Profile record in `profiles` table
+- ✅ Wallet with $0 balance
+- ✅ Unique affiliate link
+- ✅ Default user role
+- ✅ Streak tracking record
+
+**Manual Setup Required**
+- ⚠️ Storage buckets (5 min via SQL - Step 6)
+- ⚠️ Auth providers (Email auto-enabled, others optional)
+- ⚠️ Edge functions deployment (via CLI - Step 8)
+- ⚠️ First admin account (via SQL - Step 9)
 
 ## 🛠️ Tech Stack
 
@@ -33,38 +75,237 @@ A full-stack referral and rewards platform built with React, TypeScript, and Sup
 - **AI**: Lovable AI Gateway (Gemini models)
 - **Icons**: Lucide React
 
-## 🚀 Quick Start
+## 🚀 Complete Setup Guide
 
 ### Prerequisites
-- Node.js 18+ or Bun
+- Node.js 18+ or Bun installed
 - Git
-- Supabase account (for own deployment)
+- Supabase account ([sign up free](https://supabase.com))
+- Supabase CLI: `npm install -g supabase`
 
-### Local Development
-
+### Step 1: Clone Repository
 ```bash
-# Clone the repository
 git clone <YOUR_GIT_URL>
-cd <YOUR_PROJECT_NAME>
-
-# Install dependencies
+cd refo
 npm install
-# or
-bun install
-
-# Set up environment variables
-# Create .env file with your Supabase credentials:
-# VITE_SUPABASE_URL=https://your-project.supabase.co
-# VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
-# VITE_SUPABASE_PROJECT_ID=your-project-id
-
-# Run development server
-npm run dev
-# or
-bun dev
+# or: bun install
 ```
 
-The app will be available at `http://localhost:5173`
+### Step 2: Create Supabase Project
+1. Go to [Supabase Dashboard](https://supabase.com/dashboard)
+2. Click **"New Project"**
+3. Fill in details (name, password, region)
+4. Wait ~2 minutes for project creation
+5. **Important for Free Tier**: Settings → General → Pause settings → Set "Pause after" to **"Never"**
+
+### Step 3: Get Credentials
+**From Settings → API:**
+- Copy **Project URL** (e.g., `https://xxxxx.supabase.co`)
+- Copy **anon public** key (starts with `eyJ...`)
+- Copy **Project Reference ID** (from URL or Settings → General)
+
+### Step 4: Configure Environment
+Create `.env` file in project root:
+```env
+VITE_SUPABASE_URL=https://your-project-id.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
+VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key_here
+VITE_SUPABASE_PROJECT_ID=your_project_id
+```
+
+### Step 5: Run All Database Migrations
+
+**Option A: Using Supabase CLI (Recommended)**
+```bash
+# Link to your project
+supabase link --project-ref your-project-id
+
+# Push all migrations to database
+supabase db push
+```
+
+**Option B: Manual (Supabase Dashboard)**
+1. Open SQL Editor in Supabase Dashboard
+2. Run each file from `supabase/migrations/` folder in chronological order (sorted by filename timestamp)
+3. Verify success: Check Database → Tables to see all tables created
+
+### Step 6: Set Up Storage Buckets
+Run in SQL Editor:
+```sql
+-- Create buckets
+INSERT INTO storage.buckets (id, name, public) VALUES 
+  ('task-proofs', 'task-proofs', true),
+  ('avatars', 'avatars', true);
+
+-- Task proofs policies
+CREATE POLICY "Users upload proofs" ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'task-proofs' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users view proofs" ON storage.objects FOR SELECT TO authenticated
+USING (bucket_id = 'task-proofs');
+
+CREATE POLICY "Admins delete proofs" ON storage.objects FOR DELETE TO authenticated
+USING (bucket_id = 'task-proofs' AND has_role(auth.uid(), 'admin'::app_role));
+
+-- Avatar policies
+CREATE POLICY "Public avatars" ON storage.objects FOR SELECT
+USING (bucket_id = 'avatars');
+
+CREATE POLICY "Users upload avatar" ON storage.objects FOR INSERT TO authenticated
+WITH CHECK (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users update avatar" ON storage.objects FOR UPDATE TO authenticated
+USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+
+CREATE POLICY "Users delete avatar" ON storage.objects FOR DELETE TO authenticated
+USING (bucket_id = 'avatars' AND auth.uid()::text = (storage.foldername(name))[1]);
+```
+
+### Step 7: Configure Authentication
+
+#### Email Auth (Required)
+1. Go to **Authentication → Providers → Email**
+2. Enable Email provider
+3. **For Testing**: Disable "Confirm email" (allows instant signup)
+4. **For Production**: Enable "Confirm email" and configure email templates
+
+#### Phone Auth (Optional)
+1. **Authentication → Providers → Phone**
+2. Enable Phone provider
+3. Select SMS provider (Twilio, MessageBird, Vonage)
+4. Enter provider credentials
+
+#### Google OAuth (Optional)
+**Google Cloud Console Setup:**
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create/select project → **APIs & Services → Credentials**
+3. Click **Create Credentials → OAuth Client ID**
+4. Application type: **Web application**
+5. **Authorized JavaScript origins**: `https://your-project-id.supabase.co`
+6. **Authorized redirect URIs**: `https://your-project-id.supabase.co/auth/v1/callback`
+7. Copy **Client ID** and **Client Secret**
+
+**OAuth Consent Screen:**
+1. Go to **OAuth consent screen** in Google Cloud
+2. Add **Authorized domain**: `supabase.co`
+3. Add **Scopes**: `userinfo.email`, `userinfo.profile`, `openid`
+
+**Supabase Configuration:**
+1. **Authentication → Providers → Google**
+2. Enable Google provider
+3. Paste Client ID and Client Secret
+4. Save
+
+#### Site URL Configuration
+1. **Authentication → URL Configuration**
+2. **Site URL**: `http://localhost:5173` (dev) or `https://yourdomain.com` (prod)
+3. **Redirect URLs**: Add `http://localhost:5173/**` and `https://yourdomain.com/**`
+
+### Step 8: Deploy Edge Functions
+```bash
+# Deploy all functions
+supabase functions deploy refo-chat
+supabase functions deploy keep-alive
+supabase functions deploy cleanup-old-proofs
+supabase functions deploy send-task-notification
+supabase functions deploy update-gamification
+
+# Set secrets
+supabase secrets set GEMINI_API_KEY=your_gemini_api_key
+supabase secrets set RESEND_API_KEY=your_resend_api_key
+supabase secrets set LOVABLE_API_KEY=your_lovable_key
+```
+
+### Step 9: Create Admin Account
+```bash
+# Start development server
+npm run dev
+# or: bun dev
+
+# Open http://localhost:5173 and sign up with your email
+```
+
+Then run in SQL Editor:
+```sql
+-- Grant admin role
+INSERT INTO public.user_roles (user_id, role)
+SELECT id, 'admin'::app_role
+FROM auth.users
+WHERE email = 'your-email@example.com'
+ON CONFLICT DO NOTHING;
+
+-- Grant owner status (full permissions)
+UPDATE public.user_roles
+SET is_owner = true
+WHERE user_id = (SELECT id FROM auth.users WHERE email = 'your-email@example.com');
+```
+
+Refresh app and go to `/admin` to access admin panel.
+
+### Step 10: Start Development
+```bash
+npm run dev
+# or: bun dev
+```
+App runs at **http://localhost:5173** ✨
+
+---
+
+## ✅ Post-Setup Verification Checklist
+
+After completing setup, verify everything works:
+
+### Database & Auth
+- [ ] All tables created (check Database → Tables in Supabase)
+- [ ] Can sign up new user (email/password)
+- [ ] Can login with existing user
+- [ ] Google OAuth working (if configured)
+- [ ] Phone OTP working (if configured)
+- [ ] Profile auto-created on signup
+- [ ] Wallet auto-created with 0 balance
+
+### Storage & Files
+- [ ] Both storage buckets exist (`task-proofs`, `avatars`)
+- [ ] Can upload avatar image
+- [ ] Can upload task proof images
+- [ ] Files accessible via public URLs
+
+### Admin Access
+- [ ] Admin account created via SQL
+- [ ] Can access `/admin` route
+- [ ] Admin panel loads without errors
+- [ ] Can view all users in Users Management
+- [ ] Can create new offers
+- [ ] Can manage roles
+
+### Core Features
+- [ ] Dashboard displays user stats
+- [ ] Can view available offers
+- [ ] Can complete task and upload proof
+- [ ] Notifications appear in bell icon
+- [ ] Real-time notifications working
+- [ ] Leaderboard shows users with earnings
+- [ ] Streak tracking increments correctly
+- [ ] AI chat responds (if GEMINI_API_KEY configured)
+
+### Edge Functions
+- [ ] `refo-chat` deployed and working
+- [ ] `cleanup-old-proofs` deployed
+- [ ] `keep-alive` deployed
+- [ ] `send-task-notification` deployed
+- [ ] `update-gamification` deployed
+- [ ] Check logs: `supabase functions logs <function-name>`
+
+### Production Readiness
+- [ ] All secrets configured
+- [ ] Email confirmation enabled (for production)
+- [ ] Site URL updated for production domain
+- [ ] Redirect URLs include production domain
+- [ ] Environment variables set in hosting platform
+- [ ] Build succeeds: `npm run build`
+- [ ] No TypeScript errors: `npm run type-check`
+
+---
 
 ## 📦 Project Structure
 
@@ -105,27 +346,47 @@ refo-app/
 
 ## 🗄️ Database Schema
 
-### Main Tables
-- `profiles` - User profile information
-- `wallet` - User balance tracking
-- `user_roles` - Role-based access control (admin/user) **with owner flag**
-- `offers` - Available tasks/offers
-- `tasks` - User task submissions
+### Tables Created by Migrations
+- `profiles` - User profile information (avatar, username, email, phone)
+- `wallet` - User balance tracking (total, pending)
+- `user_roles` - Role-based access control (admin/user + owner flag)
+- `offers` - Available tasks/offers with rewards
+- `tasks` - User task submissions with proof uploads
 - `transactions` - Financial transaction history
-- `payout_requests` - Withdrawal requests
-- `badges` - Achievement badges
-- `user_badges` - User badge progress
+- `payout_requests` - Withdrawal requests (UPI/Bank)
+- `badges` - Achievement badges configuration
+- `user_badges` - User-earned badges
 - `user_streaks` - Daily streak tracking
 - `affiliate_links` - Referral tracking
 - `chats` - AI chat sessions
 - `chat_messages` - Chat history
+- `notifications` - In-app notifications system
+- `task_cleanup_log` - Task proof cleanup tracking
 
-### Database Functions
-- `has_role(user_id, role)` - Check if user has specific role
-- `is_owner(user_id)` - Check if user is an owner
-- `handle_new_user()` - Auto-create profile, wallet, and default user role
-- `handle_updated_at()` - Update timestamps automatically
-- `delete_old_task_proofs()` - Clean up old task proofs (7+ days)
+### Database Functions (Auto-created)
+- `has_role(user_id, role)` - Check user role (security definer)
+- `is_owner(user_id)` - Check owner status (security definer)
+- `handle_new_user()` - Auto-create profile, wallet, affiliate link, default role
+- `handle_updated_at()` - Auto-update timestamps
+- `handle_chats_updated_at()` - Update chat last_updated timestamp
+- `delete_old_task_proofs()` - Clean up task proofs older than 7 days
+
+### Database Triggers (Auto-created)
+- `on_auth_user_created` - Trigger `handle_new_user()` on signup
+- `update_*_updated_at` - Auto-update timestamps on various tables
+
+### RLS Policies (Comprehensive)
+All tables have proper Row Level Security:
+- ✅ Users can only access their own data
+- ✅ Admins have elevated permissions
+- ✅ Owners have full control
+- ✅ Public data properly exposed (leaderboards, badges)
+
+### Storage Buckets (Manual Setup Required)
+- `task-proofs` - User task proof uploads (images/files)
+- `avatars` - User profile pictures
+
+**Note**: Storage buckets must be created manually (Step 6 in setup)
 
 ## 📝 Migration to Your Own Supabase
 
