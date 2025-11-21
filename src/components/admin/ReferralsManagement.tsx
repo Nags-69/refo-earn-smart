@@ -180,6 +180,16 @@ const ReferralsManagement = () => {
           .eq("user_id", task.user_id);
       }
 
+      // Create in-app notification
+      await supabase.from("notifications").insert({
+        user_id: task.user_id,
+        title: "Task Verified! 🎉",
+        message: `Your task for "${task.offer_title}" has been verified. ₹${task.offer_reward} has been added to your wallet.`,
+        type: "success",
+        task_id: taskId,
+        offer_id: task.offer_id,
+      });
+
       toast({ title: `Task verified! ₹${task.offer_reward} added to user wallet` });
       
       // Send verification email
@@ -222,6 +232,16 @@ const ReferralsManagement = () => {
           })
           .eq("user_id", task.user_id);
       }
+
+      // Create in-app notification
+      await supabase.from("notifications").insert({
+        user_id: task.user_id,
+        title: "Task Rejected",
+        message: `Your task for "${task.offer_title}" was rejected. ${reason ? `Reason: ${reason}` : "Please review the requirements and try again."}`,
+        type: "error",
+        task_id: taskId,
+        offer_id: task.offer_id,
+      });
 
       toast({ title: "Task rejected" });
       
