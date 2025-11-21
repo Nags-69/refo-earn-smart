@@ -131,7 +131,7 @@ const Admin = () => {
       {/* Desktop layout */}
       <div className="flex">
         {/* Desktop sidebar */}
-        <aside className="hidden md:block w-64 min-h-screen bg-card border-r border-border opacity-0">
+        <aside className="hidden md:block w-64 min-h-screen bg-card border-r border-border">
           <div className="p-6">
             <h1 className="text-2xl font-bold text-primary">Refo Admin</h1>
           </div>
