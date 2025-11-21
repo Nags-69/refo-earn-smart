@@ -7,6 +7,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Mail, Chrome } from "lucide-react";
+import { z } from "zod";
+
+const authSchema = z.object({
+  email: z.string().trim().email({ message: "Invalid email address" }).max(255, { message: "Email must be less than 255 characters" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters" }).max(128, { message: "Password must be less than 128 characters" })
+});
 
 interface AuthModalProps {
   open: boolean;
@@ -23,10 +29,13 @@ export const AuthModal = ({ open, onOpenChange, onSuccess }: AuthModalProps) => 
   const { toast } = useToast();
 
   const handleEmailAuth = async (isSignUp: boolean) => {
-    if (!email || !password) {
+    // Validate input
+    const validation = authSchema.safeParse({ email, password });
+    if (!validation.success) {
+      const errors = validation.error.errors.map(e => e.message).join(", ");
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: "Validation Error",
+        description: errors,
         variant: "destructive",
       });
       return;
@@ -94,10 +103,13 @@ export const AuthModal = ({ open, onOpenChange, onSuccess }: AuthModalProps) => 
   };
 
   const handleForgotPassword = async () => {
-    if (!email) {
+    // Validate email
+    const emailSchema = z.string().trim().email({ message: "Invalid email address" });
+    const validation = emailSchema.safeParse(email);
+    if (!validation.success) {
       toast({
-        title: "Error",
-        description: "Please enter your email address",
+        title: "Validation Error",
+        description: validation.error.errors[0].message,
         variant: "destructive",
       });
       return;
