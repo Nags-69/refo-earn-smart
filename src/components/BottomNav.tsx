@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useState } from "react";
 import { AuthModal } from "./AuthModal";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { NotificationBell } from "./NotificationBell";
 
 const BottomNav = () => {
   const location = useLocation();
@@ -71,6 +72,12 @@ const BottomNav = () => {
               </Link>
             );
           })}
+          {user && (
+            <div className="flex flex-col items-center justify-center gap-1 flex-1">
+              <NotificationBell />
+              <span className="text-xs font-medium text-muted-foreground">Alerts</span>
+            </div>
+          )}
         </div>
       </nav>
     </>
