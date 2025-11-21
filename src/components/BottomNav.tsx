@@ -14,16 +14,24 @@ const BottomNav = () => {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const baseNavItems = [
-    { icon: Home, label: "Home", path: "/", protected: false },
-    { icon: LayoutDashboard, label: "Tasks", path: "/dashboard", protected: true },
-    { icon: Trophy, label: "Ranks", path: "/leaderboard", protected: true },
-    { icon: Wallet, label: "Wallet", path: "/wallet", protected: true },
-    { icon: User, label: "Profile", path: "/profile", protected: true },
+    { icon: Home, label: "Home", path: "/", protected: false, showWhenLoggedIn: false },
+    { icon: LayoutDashboard, label: "Tasks", path: "/dashboard", protected: true, showWhenLoggedIn: true },
+    { icon: Trophy, label: "Ranks", path: "/leaderboard", protected: true, showWhenLoggedIn: true },
+    { icon: Wallet, label: "Wallet", path: "/wallet", protected: true, showWhenLoggedIn: true },
+    { icon: User, label: "Profile", path: "/profile", protected: true, showWhenLoggedIn: true },
   ];
 
+  // Filter nav items based on login status
+  const filteredNavItems = baseNavItems.filter(item => {
+    if (user) {
+      return item.showWhenLoggedIn;
+    }
+    return true;
+  });
+
   const navItems = isAdmin 
-    ? [...baseNavItems, { icon: Shield, label: "Admin", path: "/admin", protected: true }]
-    : baseNavItems;
+    ? [...filteredNavItems, { icon: Shield, label: "Admin", path: "/admin", protected: true, showWhenLoggedIn: true }]
+    : filteredNavItems;
 
   const handleNavClick = (item: typeof navItems[0], e: React.MouseEvent) => {
     if (item.protected && !user) {
