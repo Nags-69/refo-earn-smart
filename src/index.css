@@ -113,16 +113,16 @@ All colors MUST be HSL.
     @apply font-heading;
   }
 
-  /* Prominent overlay scrollbar */
+  /* Visible overlay scrollbar */
   * {
     scrollbar-width: thin; /* Firefox */
-    scrollbar-color: hsl(var(--foreground) / 0.4) transparent;
+    scrollbar-color: hsl(var(--border)) transparent;
   }
 
   /* Webkit browsers (Chrome, Safari, Edge) */
   *::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 10px;
+    height: 10px;
   }
 
   *::-webkit-scrollbar-track {
@@ -130,14 +130,11 @@ All colors MUST be HSL.
   }
 
   *::-webkit-scrollbar-thumb {
-    background: hsl(var(--foreground) / 0.4);
-    border-radius: 4px;
-    border: 2px solid transparent;
-    background-clip: padding-box;
+    background: hsl(var(--border));
+    border-radius: 5px;
   }
 
   *::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--foreground) / 0.6);
-    background-clip: padding-box;
+    background: hsl(var(--muted-foreground));
   }
 }
