@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { LayoutDashboard, Package, Users, CreditCard, MessageSquare, Settings, Link2, UserCog } from "lucide-react";
+import { LayoutDashboard, Package, Users, CreditCard, MessageSquare, Settings, Link2, UserCog, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import Overview from "@/components/admin/Overview";
@@ -10,9 +10,10 @@ import ChatControl from "@/components/admin/ChatControl";
 import AdminSettings from "@/components/admin/AdminSettings";
 import AffiliatesManagement from "@/components/admin/AffiliatesManagement";
 import UsersManagement from "@/components/admin/UsersManagement";
+import NotificationsManagement from "@/components/admin/NotificationsManagement";
 import { RolesManagement } from "@/components/admin/RolesManagement";
 
-type AdminSection = "overview" | "offers" | "referrals" | "payouts" | "chat" | "affiliates" | "users" | "roles" | "settings";
+type AdminSection = "overview" | "offers" | "referrals" | "payouts" | "chat" | "affiliates" | "users" | "roles" | "notifications" | "settings";
 
 const Admin = () => {
   const [activeSection, setActiveSection] = useState<AdminSection>("overview");
@@ -72,6 +73,7 @@ const Admin = () => {
     { id: "payouts" as AdminSection, label: "Payouts", icon: CreditCard },
     { id: "affiliates" as AdminSection, label: "Affiliates", icon: Link2 },
     { id: "chat" as AdminSection, label: "Chat Control", icon: MessageSquare },
+    { id: "notifications" as AdminSection, label: "Notifications", icon: Bell },
     { id: "roles" as AdminSection, label: "Roles", icon: UserCog },
     { id: "settings" as AdminSection, label: "Settings", icon: Settings },
   ];
@@ -92,6 +94,8 @@ const Admin = () => {
         return <AffiliatesManagement />;
       case "chat":
         return <ChatControl />;
+      case "notifications":
+        return <NotificationsManagement />;
       case "roles":
         return <RolesManagement />;
       case "settings":

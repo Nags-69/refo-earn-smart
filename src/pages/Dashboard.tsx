@@ -164,6 +164,15 @@ const Dashboard = () => {
       });
     }
 
+    // Create in-app notification for task start
+    await supabase.from("notifications").insert({
+      user_id: user.id,
+      title: "Task Started! 🚀",
+      message: `You've started "${selectedOffer.title}". Complete the task and upload proof to earn ₹${selectedOffer.reward}.`,
+      type: "info",
+      offer_id: selectedOffer.id,
+    });
+
     toast({
       title: "Task started!",
       description: "Redirecting to app download...",
@@ -290,6 +299,25 @@ const Dashboard = () => {
       } catch (gamError) {
         console.log('Gamification update failed:', gamError);
         // Don't block task completion if gamification fails
+      }
+
+      // Get task details for notification
+      const { data: taskDetails } = await supabase
+        .from('tasks')
+        .select('offer_id, offers(title, reward)')
+        .eq('id', uploadingTaskId)
+        .single();
+
+      // Create in-app notification for proof upload
+      if (taskDetails) {
+        await supabase.from("notifications").insert({
+          user_id: user.id,
+          title: "Proof Uploaded! 📸",
+          message: `Your proof for "${(taskDetails as any).offers?.title}" has been submitted for review. You'll be notified once it's verified.`,
+          type: "info",
+          task_id: uploadingTaskId,
+          offer_id: taskDetails.offer_id,
+        });
       }
 
       toast({
