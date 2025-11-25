@@ -1,43 +1,23 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import BottomNav from "@/components/BottomNav";
-import OfferCard from "@/components/OfferCard";
 import { AuthModal } from "@/components/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, Star, Shield, ArrowRight } from "lucide-react";
-import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [offers, setOffers] = useState([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const { user } = useAuth();
-  const { isAdmin } = useAdminCheck(user?.id);
 
-  useEffect(() => {
-    loadOffers();
-  }, []);
-
-  // Redirect authenticated users to dashboard
+  // Redirect authenticated users to dashboard immediately
   useEffect(() => {
     if (user) {
       navigate("/dashboard");
     }
   }, [user, navigate]);
-
-  const loadOffers = async () => {
-    const { data } = await supabase
-      .from("offers")
-      .select("*")
-      .eq("is_public", true)
-      .eq("status", "active")
-      .limit(6);
-    
-    if (data) setOffers(data);
-  };
 
   const handleGetStarted = () => {
     if (user) {
@@ -58,21 +38,6 @@ const Index = () => {
         }}
       />
       <div className="min-h-screen bg-background pb-24">
-        {/* Admin Button for Desktop */}
-        {isAdmin && (
-          <div className="fixed top-4 right-4 z-50 hidden md:block">
-            <Button
-              onClick={() => navigate("/admin")}
-              variant="outline"
-              size="sm"
-              className="bg-background/95 backdrop-blur-sm border-primary/20 hover:bg-primary/10"
-            >
-              <Shield className="h-4 w-4 mr-2" />
-              Admin Panel
-            </Button>
-          </div>
-        )}
-        
         {/* Hero Section */}
         <section className="relative overflow-hidden bg-gradient-to-br from-primary/10 via-accent to-secondary">
           <div className="max-w-6xl mx-auto px-4 py-16 md:py-24">
@@ -126,36 +91,19 @@ const Index = () => {
         <section className="max-w-6xl mx-auto px-4 py-12 md:py-16">
           <div className="mb-8">
             <h2 className="text-3xl font-heading font-bold mb-2">Top Offers</h2>
-            <p className="text-muted-foreground">Start earning with these popular offers</p>
+            <p className="text-muted-foreground">Start earning with these popular offers - Sign up to view details</p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {offers.map((offer: any) => (
-              <OfferCard
-                key={offer.id}
-                title={offer.title}
-                description={offer.description}
-                logoUrl={offer.logo_url}
-                reward={offer.reward}
-                category={offer.category}
-                onStartTask={handleGetStarted}
-              />
-            ))}
+          <div className="text-center">
+            <Button 
+              size="lg"
+              onClick={handleGetStarted}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-8"
+            >
+              Sign Up to View Offers
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
-          
-          {offers.length === 6 && (
-            <div className="text-center mt-8">
-              <Button 
-                variant="outline" 
-                size="lg"
-                onClick={handleGetStarted}
-                className="rounded-full"
-              >
-                View All Offers
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          )}
         </section>
 
         {/* FAQ Section */}
