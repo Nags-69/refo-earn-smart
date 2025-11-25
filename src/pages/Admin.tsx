@@ -20,49 +20,17 @@ const Admin = () => {
   const [pendingVerificationCount, setPendingVerificationCount] = useState(0);
 
   useEffect(() => {
-    let mounted = true;
-    
-    const loadPendingCount = async () => {
-      if (mounted) {
-        await fetchPendingCount();
-      }
-    };
-    
-    loadPendingCount();
-
-    // Set up real-time subscription for task updates
-    const channel = supabase
-      .channel('admin-task-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'tasks'
-        },
-        () => {
-          if (mounted) {
-            fetchPendingCount();
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      mounted = false;
-      supabase.removeChannel(channel);
-    };
+    // Only fetch on mount, remove realtime for better performance
+    fetchPendingCount();
   }, []);
 
   const fetchPendingCount = async () => {
-    const { data, error } = await supabase
+    const { count } = await supabase
       .from("tasks")
-      .select("id", { count: 'exact' })
+      .select("*", { count: 'exact', head: true })
       .in("status", ["pending", "completed"]);
 
-    if (!error && data) {
-      setPendingVerificationCount(data.length);
-    }
+    setPendingVerificationCount(count || 0);
   };
 
   const sections = [
