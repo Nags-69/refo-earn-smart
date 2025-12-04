@@ -322,12 +322,12 @@ const Index = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               {[
-                { name: "PhonePe", reward: 50, category: "Finance", description: "Complete your first UPI payment and earn instantly." },
-                { name: "Google Pay", reward: 51, category: "Finance", description: "Sign up and make your first transaction to earn." },
-                { name: "Groww", reward: 100, category: "Investment", description: "Open a free demat account and get rewarded." },
-                { name: "Upstox", reward: 150, category: "Investment", description: "Complete KYC and start trading to earn big." },
-                { name: "Dream11", reward: 50, category: "Gaming", description: "Create your first fantasy team and play." },
-                { name: "Amazon", reward: 25, category: "Shopping", description: "Install app and complete your first order." },
+                { name: "PhonePe", reward: 50, category: "Finance", description: "Complete your first UPI payment and earn instantly.", icon: Wallet, color: "bg-purple-500/20 text-purple-500" },
+                { name: "Google Pay", reward: 51, category: "Finance", description: "Sign up and make your first transaction to earn.", icon: CreditCard, color: "bg-blue-500/20 text-blue-500" },
+                { name: "Groww", reward: 100, category: "Investment", description: "Open a free demat account and get rewarded.", icon: TrendingUp, color: "bg-emerald-500/20 text-emerald-500" },
+                { name: "Upstox", reward: 150, category: "Investment", description: "Complete KYC and start trading to earn big.", icon: TrendingUp, color: "bg-amber-500/20 text-amber-500" },
+                { name: "Dream11", reward: 50, category: "Gaming", description: "Create your first fantasy team and play.", icon: Trophy, color: "bg-red-500/20 text-red-500" },
+                { name: "Amazon", reward: 25, category: "Shopping", description: "Install app and complete your first order.", icon: Gift, color: "bg-orange-500/20 text-orange-500" },
               ].map((app, i) => (
                 <Card 
                   key={i}
@@ -335,10 +335,8 @@ const Index = () => {
                   onClick={handleGetStarted}
                 >
                   <div className="flex gap-4">
-                    <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
-                      <span className="text-2xl font-heading font-bold text-primary">
-                        {app.name.charAt(0)}
-                      </span>
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${app.color}`}>
+                      <app.icon className="w-8 h-8" />
                     </div>
                     
                     <div className="flex-1 min-w-0">
