@@ -11,7 +11,7 @@ import {
   Smartphone, Wallet, Users, Trophy, Zap, Clock, 
   CreditCard, Gift, TrendingUp, Sparkles
 } from "lucide-react";
-import AnimatedBackground from "@/components/AnimatedBackground";
+import NewdonBackground from "@/components/NewdonBackground";
 import ScrollCard from "@/components/ScrollCard";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -160,7 +160,7 @@ const Newdon = () => {
         }}
       />
       
-      <AnimatedBackground />
+      <NewdonBackground />
       
       <div className="relative z-10 min-h-screen pb-24">
         {/* Hero Section */}
