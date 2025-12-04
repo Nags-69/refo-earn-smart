@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,6 +28,7 @@ export const AuthModal = ({ open, onOpenChange, onSuccess }: AuthModalProps) => 
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const handleEmailAuth = async (isSignUp: boolean) => {
     // Validate input
@@ -48,7 +50,7 @@ export const AuthModal = ({ open, onOpenChange, onSuccess }: AuthModalProps) => 
           email,
           password,
           options: {
-            emailRedirectTo: `${window.location.origin}/dashboard`,
+            emailRedirectTo: `${window.location.origin}/`,
           },
         });
         if (error) throw error;
@@ -58,6 +60,7 @@ export const AuthModal = ({ open, onOpenChange, onSuccess }: AuthModalProps) => 
         });
         onOpenChange(false);
         onSuccess?.();
+        navigate("/");
       } else {
         const { error } = await supabase.auth.signInWithPassword({
           email,
@@ -70,6 +73,7 @@ export const AuthModal = ({ open, onOpenChange, onSuccess }: AuthModalProps) => 
         });
         onOpenChange(false);
         onSuccess?.();
+        navigate("/");
       }
     } catch (error: any) {
       toast({
