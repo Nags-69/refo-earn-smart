@@ -152,10 +152,10 @@ const AnimatedBackground = () => {
 
     particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
     const particlesMaterial = new THREE.PointsMaterial({
-      color: 0xffffff,
-      size: 0.05,
+      color: 0x9333ea,
+      size: 0.08,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.3,
     });
     const particles = new THREE.Points(particlesGeometry, particlesMaterial);
     scene.add(particles);
@@ -258,10 +258,7 @@ const AnimatedBackground = () => {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{
-        background: 'radial-gradient(ellipse at center, rgba(15, 15, 30, 0.95) 0%, rgba(5, 5, 15, 1) 100%)',
-      }}
+      className="fixed inset-0 pointer-events-none z-0 bg-background"
     />
   );
 };
