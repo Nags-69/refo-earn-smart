@@ -19,8 +19,8 @@ const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
         }
       },
       {
-        threshold: 0.2,
-        rootMargin: "-50px",
+        threshold: 0.1,
+        rootMargin: "-10px",
       }
     );
 
@@ -31,17 +31,21 @@ const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
     return () => observer.disconnect();
   }, []);
 
+  // Calculate top offset for stacking effect - each card stacks 40px lower
+  const topOffset = 80 + index * 40;
+
   return (
     <div
       ref={cardRef}
       className={cn(
-        "sticky top-20 w-full max-w-5xl mx-auto transition-all duration-700 ease-out",
+        "sticky w-full max-w-5xl mx-auto transition-all duration-700 ease-out",
         isVisible 
           ? "opacity-100 translate-y-0 scale-100" 
-          : "opacity-0 translate-y-20 scale-95",
+          : "opacity-0 translate-y-20 scale-[0.98]",
         className
       )}
       style={{
+        top: `${topOffset}px`,
         zIndex: 10 + index,
       }}
     >
