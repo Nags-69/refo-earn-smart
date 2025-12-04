@@ -83,44 +83,44 @@ const Index = () => {
         {/* Hero Section */}
         <section className="relative min-h-screen flex items-center justify-center px-4 py-12">
           <div className="max-w-5xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center gap-2 bg-card/80 backdrop-blur-sm px-5 py-2.5 rounded-full border border-border/50 shadow-lg">
-              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
-              <span className="text-sm font-medium">Join 500+ users earning daily</span>
+            <div className="inline-flex items-center gap-2 glass px-5 py-2.5 rounded-full shadow-lg animate-fade-up">
+              <Sparkles className="w-4 h-4 text-primary animate-pulse-soft" />
+              <span className="text-sm font-medium tracking-wide">Join 500+ users earning daily</span>
             </div>
             
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-bold tracking-tight leading-tight">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-heading font-extrabold tracking-tighter leading-[0.95] animate-fade-up stagger-1">
               Download.
               <br />
-              <span className="bg-gradient-to-r from-primary via-pink-500 to-amber-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-violet-500 to-pink-500 bg-clip-text text-transparent animate-pulse-soft">
                 Earn.
               </span>
               <br />
               Repeat.
             </h1>
             
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed animate-fade-up stagger-2">
               Turn your smartphone into a money machine. Download apps, complete simple tasks, 
-              and watch your earnings grow. <span className="text-foreground font-medium">No fees. No hassle. Just rewards.</span>
+              and watch your earnings grow. <span className="text-foreground font-semibold">No fees. No hassle. Just rewards.</span>
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4 animate-fade-up stagger-3">
               <Button
                 size="lg"
                 onClick={handleGetStarted}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-10 py-7 text-xl font-bold shadow-2xl hover:shadow-primary/25 transition-all hover:scale-105"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-10 py-7 text-lg font-bold shadow-2xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300 ease-smooth"
               >
                 Start Earning Now
-                <ArrowRight className="ml-2 h-6 w-6" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <p className="text-sm text-muted-foreground">Free forever • No credit card</p>
+              <p className="text-sm text-muted-foreground font-medium">Free forever • No credit card</p>
             </div>
             
             {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 max-w-3xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 max-w-3xl mx-auto animate-fade-up stagger-4">
               {stats.map((stat, i) => (
-                <div key={i} className="text-center">
-                  <div className="text-3xl md:text-4xl font-bold text-foreground">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
+                <div key={i} className="text-center group">
+                  <div className="text-3xl md:text-4xl font-extrabold text-foreground group-hover:text-primary transition-colors duration-300">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground mt-1 font-medium">{stat.label}</div>
                 </div>
               ))}
             </div>
@@ -339,15 +339,15 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
               {featuredOffers.map((offer, i) => (
                 <Card 
                   key={offer.id}
-                  className="p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-border cursor-pointer group"
+                  className="p-5 hover-lift border-border/50 cursor-pointer group glass"
                   onClick={handleGetStarted}
                 >
                   <div className="flex gap-4">
-                    <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                    <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform duration-300 ease-smooth overflow-hidden">
                       {offer.logo_url ? (
                         <img src={offer.logo_url} alt={offer.title} className="w-12 h-12 object-contain" />
                       ) : (
@@ -359,8 +359,8 @@ const Index = () => {
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-heading font-semibold text-base line-clamp-1">{offer.title}</h3>
-                        <Badge className="bg-success text-success-foreground whitespace-nowrap">
+                        <h3 className="font-heading font-bold text-base line-clamp-1">{offer.title}</h3>
+                        <Badge className="bg-success text-success-foreground whitespace-nowrap font-bold">
                           ₹{offer.reward}
                         </Badge>
                       </div>
@@ -373,14 +373,14 @@ const Index = () => {
                       
                       <div className="flex items-center justify-between gap-2">
                         {offer.category && (
-                          <Badge variant="secondary" className="text-xs">
+                          <Badge variant="secondary" className="text-xs font-medium">
                             {offer.category}
                           </Badge>
                         )}
                         
                         <Button
                           size="sm"
-                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-5 font-semibold hover:scale-105 transition-transform duration-300 ease-smooth"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleGetStarted();
@@ -396,7 +396,7 @@ const Index = () => {
             </div>
 
             <div className="text-center">
-              <Button onClick={handleGetStarted} variant="outline" size="lg" className="rounded-full">
+              <Button onClick={handleGetStarted} variant="outline" size="lg" className="rounded-full font-semibold hover:scale-105 transition-transform duration-300 ease-smooth">
                 View All 100+ Offers <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
@@ -404,20 +404,20 @@ const Index = () => {
         </section>
 
         {/* FAQ Section */}
-        <section className="px-4 py-20 bg-card/50">
+        <section className="px-4 py-20 bg-card/30">
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-12">
-              <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-4 py-1.5 mb-4">
+              <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-4 py-1.5 mb-4 font-medium">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 FAQs
               </Badge>
-              <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
+              <h2 className="text-3xl md:text-4xl font-heading font-bold mb-4">
                 Frequently Asked
                 <span className="text-primary"> Questions</span>
               </h2>
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[
                 {
                   q: "How do I earn money on Refo?",
@@ -442,13 +442,13 @@ const Index = () => {
               ].map((faq, i) => (
                 <details 
                   key={i} 
-                  className="group bg-background/50 rounded-2xl border border-border/50 overflow-hidden"
+                  className="group glass rounded-xl overflow-hidden"
                 >
-                  <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-muted/50 transition-colors">
-                    <h3 className="font-semibold text-lg pr-4">{faq.q}</h3>
-                    <ArrowRight className="w-5 h-5 text-muted-foreground group-open:rotate-90 transition-transform flex-shrink-0" />
+                  <summary className="flex items-center justify-between p-5 cursor-pointer hover:bg-muted/30 transition-all duration-300 ease-smooth">
+                    <h3 className="font-semibold text-base pr-4">{faq.q}</h3>
+                    <ArrowRight className="w-5 h-5 text-muted-foreground group-open:rotate-90 transition-transform duration-300 ease-smooth flex-shrink-0" />
                   </summary>
-                  <div className="px-6 pb-6 pt-0 text-muted-foreground">
+                  <div className="px-5 pb-5 pt-0 text-muted-foreground text-sm leading-relaxed">
                     {faq.a}
                   </div>
                 </details>
@@ -458,28 +458,28 @@ const Index = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="px-4 py-20">
+        <section className="px-4 py-24">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="text-4xl md:text-5xl font-heading font-bold mb-6">
+            <h2 className="text-3xl md:text-4xl font-heading font-bold mb-6">
               Ready to Start
               <span className="text-primary"> Earning?</span>
             </h2>
-            <p className="text-xl text-muted-foreground mb-8">
+            <p className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto">
               Join thousands of users who are already making money with Refo. It takes less than 2 minutes to get started.
             </p>
             <Button
               size="lg"
               onClick={handleGetStarted}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-12 py-7 text-xl font-bold shadow-2xl hover:shadow-primary/25 transition-all hover:scale-105"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-10 py-7 text-lg font-bold shadow-2xl hover:shadow-primary/30 hover:scale-105 transition-all duration-300 ease-smooth"
             >
               Create Free Account
-              <ArrowRight className="ml-2 h-6 w-6" />
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="bg-card/80 backdrop-blur-sm border-t border-border/50">
+        <footer className="glass border-t border-border/30">
           <div className="max-w-6xl mx-auto px-4 py-12">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
               <div className="space-y-4">
