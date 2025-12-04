@@ -13,10 +13,12 @@ import {
 } from "lucide-react";
 import AnimatedBackground from "@/components/AnimatedBackground";
 import ScrollCard from "@/components/ScrollCard";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const navigate = useNavigate();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [featuredOffers, setFeaturedOffers] = useState<any[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -24,6 +26,23 @@ const Index = () => {
       navigate("/dashboard");
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    const fetchFeaturedOffers = async () => {
+      const { data } = await supabase
+        .from("offers")
+        .select("*")
+        .eq("is_public", true)
+        .eq("status", "active")
+        .order("created_at", { ascending: false })
+        .limit(6);
+      
+      if (data) {
+        setFeaturedOffers(data);
+      }
+    };
+    fetchFeaturedOffers();
+  }, []);
 
   const handleGetStarted = () => {
     if (user) {
@@ -321,40 +340,43 @@ const Index = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-              {[
-                { name: "PhonePe", reward: 50, category: "Finance", description: "Complete your first UPI payment and earn instantly.", icon: Wallet, color: "bg-purple-500/20 text-purple-500" },
-                { name: "Google Pay", reward: 51, category: "Finance", description: "Sign up and make your first transaction to earn.", icon: CreditCard, color: "bg-blue-500/20 text-blue-500" },
-                { name: "Groww", reward: 100, category: "Investment", description: "Open a free demat account and get rewarded.", icon: TrendingUp, color: "bg-emerald-500/20 text-emerald-500" },
-                { name: "Upstox", reward: 150, category: "Investment", description: "Complete KYC and start trading to earn big.", icon: TrendingUp, color: "bg-amber-500/20 text-amber-500" },
-                { name: "Dream11", reward: 50, category: "Gaming", description: "Create your first fantasy team and play.", icon: Trophy, color: "bg-red-500/20 text-red-500" },
-                { name: "Amazon", reward: 25, category: "Shopping", description: "Install app and complete your first order.", icon: Gift, color: "bg-orange-500/20 text-orange-500" },
-              ].map((app, i) => (
+              {featuredOffers.map((offer, i) => (
                 <Card 
-                  key={i}
+                  key={offer.id}
                   className="p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-border cursor-pointer group"
                   onClick={handleGetStarted}
                 >
                   <div className="flex gap-4">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform ${app.color}`}>
-                      <app.icon className="w-8 h-8" />
+                    <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+                      {offer.logo_url ? (
+                        <img src={offer.logo_url} alt={offer.title} className="w-12 h-12 object-contain" />
+                      ) : (
+                        <span className="text-2xl font-heading font-bold text-primary">
+                          {offer.title.charAt(0)}
+                        </span>
+                      )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2 mb-2">
-                        <h3 className="font-heading font-semibold text-base line-clamp-1">{app.name}</h3>
+                        <h3 className="font-heading font-semibold text-base line-clamp-1">{offer.title}</h3>
                         <Badge className="bg-success text-success-foreground whitespace-nowrap">
-                          ₹{app.reward}
+                          ₹{offer.reward}
                         </Badge>
                       </div>
                       
-                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                        {app.description}
-                      </p>
+                      {offer.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                          {offer.description}
+                        </p>
+                      )}
                       
                       <div className="flex items-center justify-between gap-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {app.category}
-                        </Badge>
+                        {offer.category && (
+                          <Badge variant="secondary" className="text-xs">
+                            {offer.category}
+                          </Badge>
+                        )}
                         
                         <Button
                           size="sm"
