@@ -81,8 +81,8 @@ const Index = () => {
       
       <div className="relative z-10 min-h-screen pb-24">
         {/* Hero Section */}
-        <section className="relative min-h-screen flex items-center justify-center px-4 py-12">
-          <div className="max-w-5xl mx-auto text-center space-y-8">
+        <section className="relative min-h-screen flex items-center justify-center px-4 py-8">
+          <div className="max-w-5xl mx-auto text-center space-y-6">
             <div className="inline-flex items-center gap-2 glass px-5 py-2.5 rounded-full shadow-lg animate-fade-up">
               <Sparkles className="w-4 h-4 text-primary animate-pulse-soft" />
               <span className="text-sm font-medium tracking-wide">Join 500+ users earning daily</span>
@@ -103,7 +103,7 @@ const Index = () => {
               and watch your earnings grow. <span className="text-foreground font-semibold">No fees. No hassle. Just rewards.</span>
             </p>
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4 animate-fade-up stagger-3">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2 animate-fade-up stagger-3">
               <Button
                 size="lg"
                 onClick={handleGetStarted}
@@ -116,7 +116,7 @@ const Index = () => {
             </div>
             
             {/* Stats Row */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-12 max-w-3xl mx-auto animate-fade-up stagger-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 pt-8 max-w-3xl mx-auto animate-fade-up stagger-4">
               {stats.map((stat, i) => (
                 <div key={i} className="text-center group">
                   <div className="text-3xl md:text-4xl font-extrabold text-foreground group-hover:text-primary transition-colors duration-300">{stat.value}</div>
@@ -128,7 +128,7 @@ const Index = () => {
         </section>
 
         {/* Stacked Cards Section */}
-        <section className="relative px-4 pb-20">
+        <section className="relative px-4 pb-16">
           <div className="space-y-[80vh]">
             {/* Card 1: How It Works */}
             <ScrollCard index={0} totalCards={3}>
@@ -323,9 +323,9 @@ const Index = () => {
         </section>
 
         {/* Featured Apps Section */}
-        <section className="px-4 py-20">
+        <section className="px-4 py-14">
           <div className="max-w-6xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
               <Badge className="bg-primary/10 text-primary border-primary/20 px-4 py-1.5 mb-4">
                 <Sparkles className="w-3 h-3 mr-1" />
                 Featured Apps
@@ -339,7 +339,7 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               {featuredOffers.map((offer, i) => (
                 <Card 
                   key={offer.id}
@@ -404,9 +404,9 @@ const Index = () => {
         </section>
 
         {/* FAQ Section */}
-        <section className="px-4 py-20 bg-card/30">
+        <section className="px-4 py-14 bg-card/30">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
+            <div className="text-center mb-8">
               <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-4 py-1.5 mb-4 font-medium">
                 <CheckCircle2 className="w-3 h-3 mr-1" />
                 FAQs
@@ -458,7 +458,7 @@ const Index = () => {
         </section>
 
         {/* CTA Section */}
-        <section className="px-4 py-24">
+        <section className="px-4 py-16">
           <div className="max-w-4xl mx-auto text-center">
             <h2 className="text-3xl md:text-4xl font-heading font-bold mb-6">
               Ready to Start
