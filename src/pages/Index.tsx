@@ -302,6 +302,108 @@ const Index = () => {
           </div>
         </section>
 
+        {/* Featured Apps Section */}
+        <section className="px-4 py-20">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <Badge className="bg-primary/10 text-primary border-primary/20 px-4 py-1.5 mb-4">
+                <Sparkles className="w-3 h-3 mr-1" />
+                Featured Apps
+              </Badge>
+              <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
+                Start Earning
+                <span className="text-primary"> Today</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Here are some of our top-paying apps to get you started right away.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+              {[
+                { name: "PhonePe", reward: "₹50", color: "bg-purple-500/10", icon: "💜" },
+                { name: "Google Pay", reward: "₹51", color: "bg-blue-500/10", icon: "🔵" },
+                { name: "Groww", reward: "₹100", color: "bg-emerald-500/10", icon: "📈" },
+                { name: "Upstox", reward: "₹150", color: "bg-amber-500/10", icon: "📊" },
+                { name: "Dream11", reward: "₹50", color: "bg-red-500/10", icon: "🏏" },
+                { name: "Amazon", reward: "₹25", color: "bg-orange-500/10", icon: "📦" },
+              ].map((app, i) => (
+                <div 
+                  key={i}
+                  className="group p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer text-center"
+                  onClick={handleGetStarted}
+                >
+                  <div className={`w-12 h-12 rounded-xl ${app.color} flex items-center justify-center text-2xl mx-auto mb-3 group-hover:scale-110 transition-transform`}>
+                    {app.icon}
+                  </div>
+                  <h3 className="font-semibold text-sm mb-1">{app.name}</h3>
+                  <p className="text-primary font-bold">{app.reward}</p>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center">
+              <Button onClick={handleGetStarted} variant="outline" size="lg" className="rounded-full">
+                View All 100+ Offers <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ Section */}
+        <section className="px-4 py-20 bg-card/50">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <Badge className="bg-blue-500/10 text-blue-600 border-blue-500/20 px-4 py-1.5 mb-4">
+                <CheckCircle2 className="w-3 h-3 mr-1" />
+                FAQs
+              </Badge>
+              <h2 className="text-4xl md:text-5xl font-heading font-bold mb-4">
+                Frequently Asked
+                <span className="text-primary"> Questions</span>
+              </h2>
+            </div>
+
+            <div className="space-y-4">
+              {[
+                {
+                  q: "How do I earn money on Refo?",
+                  a: "Simply browse our offers, download the recommended apps, complete the specified tasks (like signing up or making a transaction), and submit proof. Once verified, the reward is credited to your wallet.",
+                },
+                {
+                  q: "Is Refo free to use?",
+                  a: "Yes! Refo is 100% free. There are no hidden fees, no subscription charges, and no deductions from your earnings. You keep everything you earn.",
+                },
+                {
+                  q: "How quickly will I get paid?",
+                  a: "Most tasks are verified within 24-48 hours. Once verified, you can withdraw your earnings instantly to your UPI ID or bank account.",
+                },
+                {
+                  q: "What kind of tasks do I need to complete?",
+                  a: "Tasks vary by app. Common tasks include: signing up, completing KYC, making a first deposit, playing games, or shopping. Each offer clearly mentions the required task.",
+                },
+                {
+                  q: "Is my data safe with Refo?",
+                  a: "Absolutely. We use industry-standard encryption and never share your personal information with third parties. Your privacy and security are our top priorities.",
+                },
+              ].map((faq, i) => (
+                <details 
+                  key={i} 
+                  className="group bg-background/50 rounded-2xl border border-border/50 overflow-hidden"
+                >
+                  <summary className="flex items-center justify-between p-6 cursor-pointer hover:bg-muted/50 transition-colors">
+                    <h3 className="font-semibold text-lg pr-4">{faq.q}</h3>
+                    <ArrowRight className="w-5 h-5 text-muted-foreground group-open:rotate-90 transition-transform flex-shrink-0" />
+                  </summary>
+                  <div className="px-6 pb-6 pt-0 text-muted-foreground">
+                    {faq.a}
+                  </div>
+                </details>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* CTA Section */}
         <section className="px-4 py-20">
           <div className="max-w-4xl mx-auto text-center">
