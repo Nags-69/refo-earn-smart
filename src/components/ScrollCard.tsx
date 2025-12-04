@@ -10,9 +10,6 @@ interface ScrollCardProps {
 const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
-  // Each card stacks with a small peek of the card above
-  const topOffset = 100 + index * 20;
-
   return (
     <div
       ref={cardRef}
@@ -21,18 +18,11 @@ const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
         className
       )}
       style={{
-        top: `${topOffset}px`,
+        top: '100px',
         zIndex: 10 + index,
       }}
     >
-      <div className="relative">
-        {/* Shadow for depth effect */}
-        <div 
-          className="absolute inset-0 rounded-3xl bg-black/5 blur-xl -z-10"
-          style={{ transform: 'translateY(10px)' }}
-        />
-        {children}
-      </div>
+      {children}
     </div>
   );
 };
