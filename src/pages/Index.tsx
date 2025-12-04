@@ -108,8 +108,8 @@ const Index = () => {
         </section>
 
         {/* Stacked Cards Section */}
-        <section className="relative px-4">
-          <div className="relative" style={{ height: '300vh' }}>
+        <section className="relative px-4 pb-20">
+          <div className="space-y-[80vh]">
             {/* Card 1: How It Works */}
             <ScrollCard index={0} totalCards={3}>
               <div className="bg-card/90 backdrop-blur-xl rounded-3xl border border-border/50 shadow-2xl p-8 md:p-12 lg:p-16">
