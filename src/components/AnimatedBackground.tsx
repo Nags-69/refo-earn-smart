@@ -71,13 +71,6 @@ const AnimatedBackground = () => {
     };
 
     const drawDot = (d: Dot) => {
-      // Glow effect
-      ctx.beginPath();
-      ctx.arc(d.x, d.y, d.radius * 3, 0, Math.PI * 2);
-      ctx.fillStyle = d.glowColor;
-      ctx.fill();
-      
-      // Main dot
       ctx.beginPath();
       ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
       ctx.fillStyle = d.color;
