@@ -9,10 +9,12 @@ interface Dot {
   color: string;
   phase: number;
   speed: number;
+  depth: number; // For parallax - 0 to 1, where 0 is far and 1 is close
 }
 
 const AnimatedBackground = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scrollYRef = useRef(0);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -48,25 +50,38 @@ const AnimatedBackground = () => {
       
       for (let i = 0; i < dotCount; i++) {
         const x = Math.random() * canvas.width;
-        const y = Math.random() * canvas.height;
+        const y = Math.random() * canvas.height * 3; // Extend vertically for scroll
+        const depth = Math.random(); // Random depth for parallax
         
         dots.push({
           x,
           y,
           originX: x,
           originY: y,
-          radius: Math.random() * 1.5 + 0.8,
+          radius: Math.random() * 1.5 + 0.8 + depth * 0.5, // Closer dots are slightly larger
           color: colors[Math.floor(Math.random() * colors.length)],
           phase: Math.random() * Math.PI * 2,
           speed: Math.random() * 0.5 + 0.3,
+          depth,
         });
       }
     };
 
     const drawDot = (d: Dot) => {
+      // Apply parallax offset based on scroll and depth
+      const parallaxFactor = 0.3 + d.depth * 0.4; // 0.3 to 0.7 - closer dots move faster
+      const parallaxY = d.y - scrollYRef.current * parallaxFactor;
+      
+      // Only draw if visible in viewport
+      if (parallaxY < -50 || parallaxY > canvas.height + 50) return;
+      
+      // Adjust opacity based on depth for extra depth feel
+      const opacity = 0.4 + d.depth * 0.4;
+      const colorWithOpacity = d.color.replace(/[\d.]+\)$/, `${opacity})`);
+      
       ctx.beginPath();
-      ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
-      ctx.fillStyle = d.color;
+      ctx.arc(d.x, parallaxY, d.radius, 0, Math.PI * 2);
+      ctx.fillStyle = colorWithOpacity;
       ctx.fill();
     };
 
@@ -77,8 +92,12 @@ const AnimatedBackground = () => {
       let targetX = d.originX + floatX;
       let targetY = d.originY + floatY;
       
+      // Adjust mouse interaction for parallax
+      const parallaxFactor = 0.3 + d.depth * 0.4;
+      const adjustedY = d.y - scrollYRef.current * parallaxFactor;
+      
       const dx = d.x - mouseX;
-      const dy = d.y - mouseY;
+      const dy = adjustedY - mouseY;
       const dist = Math.sqrt(dx * dx + dy * dy);
       const maxDist = 120;
 
@@ -98,7 +117,10 @@ const AnimatedBackground = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       time += 0.02;
       
-      dots.forEach(d => {
+      // Sort dots by depth so farther dots render first
+      const sortedDots = [...dots].sort((a, b) => a.depth - b.depth);
+      
+      sortedDots.forEach(d => {
         updateDot(d);
         drawDot(d);
       });
@@ -116,9 +138,14 @@ const AnimatedBackground = () => {
       mouseY = -1000;
     };
 
+    const handleScroll = () => {
+      scrollYRef.current = window.scrollY;
+    };
+
     window.addEventListener("resize", resize);
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseleave", handleMouseLeave);
+    window.addEventListener("scroll", handleScroll, { passive: true });
 
     resize();
     animate();
@@ -127,6 +154,7 @@ const AnimatedBackground = () => {
       window.removeEventListener("resize", resize);
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseleave", handleMouseLeave);
+      window.removeEventListener("scroll", handleScroll);
       cancelAnimationFrame(animationId);
     };
   }, []);
