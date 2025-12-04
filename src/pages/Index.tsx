@@ -331,8 +331,7 @@ const Index = () => {
               ].map((app, i) => (
                 <Card 
                   key={i}
-                  className="p-4 hover:shadow-lg transition-all duration-300 border-border cursor-pointer group animate-fade-in opacity-0"
-                  style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'forwards' }}
+                  className="p-4 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 border-border cursor-pointer group"
                   onClick={handleGetStarted}
                 >
                   <div className="flex gap-4">
