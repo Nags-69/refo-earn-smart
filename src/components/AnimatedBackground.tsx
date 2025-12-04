@@ -5,11 +5,8 @@ interface Dot {
   y: number;
   originX: number;
   originY: number;
-  vx: number;
-  vy: number;
   radius: number;
   color: string;
-  glowColor: string;
   phase: number;
   speed: number;
 }
@@ -31,12 +28,12 @@ const AnimatedBackground = () => {
     let time = 0;
 
     const colors = [
-      { fill: "hsla(217, 91%, 60%, 0.8)", glow: "hsla(217, 91%, 60%, 0.4)" },   // Blue
-      { fill: "hsla(262, 83%, 58%, 0.8)", glow: "hsla(262, 83%, 58%, 0.4)" },   // Purple
-      { fill: "hsla(330, 81%, 60%, 0.8)", glow: "hsla(330, 81%, 60%, 0.4)" },   // Pink
-      { fill: "hsla(199, 89%, 48%, 0.8)", glow: "hsla(199, 89%, 48%, 0.4)" },   // Cyan
-      { fill: "hsla(173, 80%, 40%, 0.8)", glow: "hsla(173, 80%, 40%, 0.4)" },   // Teal
-      { fill: "hsla(271, 76%, 53%, 0.8)", glow: "hsla(271, 76%, 53%, 0.4)" },   // Violet
+      "hsla(217, 91%, 60%, 0.7)",   // Blue
+      "hsla(262, 83%, 58%, 0.7)",   // Purple
+      "hsla(330, 81%, 60%, 0.7)",   // Pink
+      "hsla(199, 89%, 48%, 0.7)",   // Cyan
+      "hsla(173, 80%, 40%, 0.7)",   // Teal
+      "hsla(271, 76%, 53%, 0.7)",   // Violet
     ];
 
     const resize = () => {
@@ -46,24 +43,20 @@ const AnimatedBackground = () => {
     };
 
     const initDots = () => {
-      const dotCount = Math.floor((canvas.width * canvas.height) / 6000);
+      const dotCount = Math.floor((canvas.width * canvas.height) / 5000);
       dots = [];
       
       for (let i = 0; i < dotCount; i++) {
         const x = Math.random() * canvas.width;
         const y = Math.random() * canvas.height;
-        const colorSet = colors[Math.floor(Math.random() * colors.length)];
         
         dots.push({
           x,
           y,
           originX: x,
           originY: y,
-          vx: 0,
-          vy: 0,
-          radius: Math.random() * 3 + 1.5,
-          color: colorSet.fill,
-          glowColor: colorSet.glow,
+          radius: Math.random() * 1.5 + 0.8,
+          color: colors[Math.floor(Math.random() * colors.length)],
           phase: Math.random() * Math.PI * 2,
           speed: Math.random() * 0.5 + 0.3,
         });
@@ -78,29 +71,25 @@ const AnimatedBackground = () => {
     };
 
     const updateDot = (d: Dot) => {
-      // Continuous floating animation
-      const floatX = Math.sin(time * d.speed + d.phase) * 20;
-      const floatY = Math.cos(time * d.speed * 0.8 + d.phase) * 15;
+      const floatX = Math.sin(time * d.speed + d.phase) * 15;
+      const floatY = Math.cos(time * d.speed * 0.8 + d.phase) * 12;
       
-      // Target position with floating
       let targetX = d.originX + floatX;
       let targetY = d.originY + floatY;
       
-      // Cursor interaction - push away
       const dx = d.x - mouseX;
       const dy = d.y - mouseY;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const maxDist = 150;
+      const maxDist = 120;
 
       if (dist < maxDist && dist > 0) {
         const force = (maxDist - dist) / maxDist;
-        const pushX = (dx / dist) * force * 80;
-        const pushY = (dy / dist) * force * 80;
+        const pushX = (dx / dist) * force * 60;
+        const pushY = (dy / dist) * force * 60;
         targetX += pushX;
         targetY += pushY;
       }
       
-      // Smooth movement towards target
       d.x += (targetX - d.x) * 0.08;
       d.y += (targetY - d.y) * 0.08;
     };
