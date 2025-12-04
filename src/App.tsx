@@ -9,7 +9,7 @@ import { AdminRoute } from "./components/AdminRoute";
 import { lazy, Suspense } from "react";
 
 // Lazy load pages for better performance
-const Index = lazy(() => import("./pages/Index"));
+const Index = lazy(() => import("./pages/Newdon"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Wallet = lazy(() => import("./pages/Wallet"));
 const Profile = lazy(() => import("./pages/Profile"));
