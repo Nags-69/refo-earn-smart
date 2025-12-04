@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import BottomNav from "@/components/BottomNav";
 import { AuthModal } from "@/components/AuthModal";
@@ -319,26 +320,59 @@ const Index = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
               {[
-                { name: "PhonePe", reward: "₹50", color: "bg-purple-500/10", icon: "💜" },
-                { name: "Google Pay", reward: "₹51", color: "bg-blue-500/10", icon: "🔵" },
-                { name: "Groww", reward: "₹100", color: "bg-emerald-500/10", icon: "📈" },
-                { name: "Upstox", reward: "₹150", color: "bg-amber-500/10", icon: "📊" },
-                { name: "Dream11", reward: "₹50", color: "bg-red-500/10", icon: "🏏" },
-                { name: "Amazon", reward: "₹25", color: "bg-orange-500/10", icon: "📦" },
+                { name: "PhonePe", reward: 50, category: "Finance", description: "Complete your first UPI payment and earn instantly." },
+                { name: "Google Pay", reward: 51, category: "Finance", description: "Sign up and make your first transaction to earn." },
+                { name: "Groww", reward: 100, category: "Investment", description: "Open a free demat account and get rewarded." },
+                { name: "Upstox", reward: 150, category: "Investment", description: "Complete KYC and start trading to earn big." },
+                { name: "Dream11", reward: 50, category: "Gaming", description: "Create your first fantasy team and play." },
+                { name: "Amazon", reward: 25, category: "Shopping", description: "Install app and complete your first order." },
               ].map((app, i) => (
-                <div 
+                <Card 
                   key={i}
-                  className="group p-4 rounded-2xl bg-card/80 backdrop-blur-sm border border-border/50 hover:border-primary/40 hover:shadow-lg transition-all cursor-pointer text-center"
+                  className="p-4 hover:shadow-lg transition-all duration-300 border-border cursor-pointer group animate-fade-in opacity-0"
+                  style={{ animationDelay: `${i * 100}ms`, animationFillMode: 'forwards' }}
                   onClick={handleGetStarted}
                 >
-                  <div className={`w-12 h-12 rounded-xl ${app.color} flex items-center justify-center text-2xl mx-auto mb-3 group-hover:scale-110 transition-transform`}>
-                    {app.icon}
+                  <div className="flex gap-4">
+                    <div className="w-16 h-16 bg-secondary rounded-2xl flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+                      <span className="text-2xl font-heading font-bold text-primary">
+                        {app.name.charAt(0)}
+                      </span>
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2 mb-2">
+                        <h3 className="font-heading font-semibold text-base line-clamp-1">{app.name}</h3>
+                        <Badge className="bg-success text-success-foreground whitespace-nowrap">
+                          ₹{app.reward}
+                        </Badge>
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+                        {app.description}
+                      </p>
+                      
+                      <div className="flex items-center justify-between gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {app.category}
+                        </Badge>
+                        
+                        <Button
+                          size="sm"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleGetStarted();
+                          }}
+                        >
+                          Start Task
+                        </Button>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-sm mb-1">{app.name}</h3>
-                  <p className="text-primary font-bold">{app.reward}</p>
-                </div>
+                </Card>
               ))}
             </div>
 
