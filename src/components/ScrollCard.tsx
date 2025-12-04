@@ -31,8 +31,8 @@ const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
     return () => observer.disconnect();
   }, []);
 
-  // Calculate top offset for stacking effect - each card stacks 40px lower
-  const topOffset = 80 + index * 40;
+  // Calculate top offset for stacking effect - each card stacks 20px lower
+  const topOffset = 20 + index * 20;
 
   return (
     <div
