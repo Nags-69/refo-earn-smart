@@ -110,7 +110,7 @@ const Index = () => {
         {/* Stacked Cards Section */}
         <section className="relative px-4 pb-32">
           {/* Card 1: How It Works */}
-          <div className="min-h-screen flex items-center py-8">
+          <div className="h-[90vh] flex items-start pt-8">
             <ScrollCard index={0}>
               <div className="bg-card/90 backdrop-blur-xl rounded-3xl border border-border/50 shadow-2xl p-8 md:p-12 lg:p-16">
                 <div className="grid md:grid-cols-2 gap-12 items-center">
@@ -173,7 +173,7 @@ const Index = () => {
           </div>
 
           {/* Card 2: App Categories */}
-          <div className="min-h-screen flex items-center py-8">
+          <div className="h-[90vh] flex items-start pt-8">
             <ScrollCard index={1}>
               <div className="bg-gradient-to-br from-card/95 via-card/90 to-primary/5 backdrop-blur-xl rounded-3xl border border-border/50 shadow-2xl p-8 md:p-12 lg:p-16">
                 <div className="text-center mb-12">
@@ -222,7 +222,7 @@ const Index = () => {
           </div>
 
           {/* Card 3: Why Choose Us */}
-          <div className="min-h-screen flex items-center py-8">
+          <div className="h-[90vh] flex items-start pt-8">
             <ScrollCard index={2}>
               <div className="bg-card/90 backdrop-blur-xl rounded-3xl border border-border/50 shadow-2xl p-8 md:p-12 lg:p-16">
                 <div className="text-center mb-12">
