@@ -58,7 +58,7 @@ const NewdonBackground = () => {
           y,
           originX: x,
           originY: y,
-          radius: Math.random() * 2 + 1 + depth * 1.5,
+          radius: Math.random() * 1 + 0.5 + depth * 0.8,
           color: colors[Math.floor(Math.random() * colors.length)],
           phase: Math.random() * Math.PI * 2,
           speed: Math.random() * 0.3 + 0.2,
