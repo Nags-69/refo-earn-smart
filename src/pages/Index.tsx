@@ -108,10 +108,10 @@ const Index = () => {
         </section>
 
         {/* Stacked Cards Section */}
-        <section className="relative px-4 pb-[200vh]">
-          {/* Card 1: How It Works */}
-          <div className="mb-[50vh]">
-            <ScrollCard index={0}>
+        <section className="relative px-4">
+          <div className="relative" style={{ height: '300vh' }}>
+            {/* Card 1: How It Works */}
+            <ScrollCard index={0} totalCards={3}>
               <div className="bg-card/90 backdrop-blur-xl rounded-3xl border border-border/50 shadow-2xl p-8 md:p-12 lg:p-16">
                 <div className="grid md:grid-cols-2 gap-12 items-center">
                   <div className="space-y-6">
@@ -170,11 +170,9 @@ const Index = () => {
                 </div>
               </div>
             </ScrollCard>
-          </div>
 
-          {/* Card 2: App Categories */}
-          <div className="mb-[50vh]">
-            <ScrollCard index={1}>
+            {/* Card 2: App Categories */}
+            <ScrollCard index={1} totalCards={3}>
               <div className="bg-gradient-to-br from-card/95 via-card/90 to-primary/5 backdrop-blur-xl rounded-3xl border border-border/50 shadow-2xl p-8 md:p-12 lg:p-16">
                 <div className="text-center mb-12">
                   <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 px-4 py-1.5 mb-4">
@@ -219,11 +217,9 @@ const Index = () => {
                 </div>
               </div>
             </ScrollCard>
-          </div>
 
-          {/* Card 3: Why Choose Us */}
-          <div className="mb-[50vh]">
-            <ScrollCard index={2}>
+            {/* Card 3: Why Choose Us */}
+            <ScrollCard index={2} totalCards={3}>
               <div className="bg-card/90 backdrop-blur-xl rounded-3xl border border-border/50 shadow-2xl p-8 md:p-12 lg:p-16">
                 <div className="text-center mb-12">
                   <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 px-4 py-1.5 mb-4">

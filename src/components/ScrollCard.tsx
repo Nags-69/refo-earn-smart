@@ -4,10 +4,11 @@ import { cn } from "@/lib/utils";
 interface ScrollCardProps {
   children: React.ReactNode;
   index: number;
+  totalCards: number;
   className?: string;
 }
 
-const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
+const ScrollCard = ({ children, index, totalCards, className }: ScrollCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
 
@@ -20,7 +21,7 @@ const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
       },
       {
         threshold: 0.1,
-        rootMargin: "-10px",
+        rootMargin: "0px",
       }
     );
 
@@ -31,22 +32,23 @@ const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
     return () => observer.disconnect();
   }, []);
 
-  // Calculate top offset for stacking effect - each card stacks 20px lower
-  const topOffset = 20 + index * 20;
+  // Each card sticks at a slightly higher position so they stack
+  const topOffset = 40 + index * 30;
 
   return (
     <div
       ref={cardRef}
       className={cn(
-        "sticky w-full max-w-5xl mx-auto transition-all duration-700 ease-out",
+        "sticky w-full max-w-5xl mx-auto transition-all duration-500 ease-out",
         isVisible 
-          ? "opacity-100 translate-y-0 scale-100" 
-          : "opacity-0 translate-y-20 scale-[0.98]",
+          ? "opacity-100 translate-y-0" 
+          : "opacity-0 translate-y-10",
         className
       )}
       style={{
         top: `${topOffset}px`,
         zIndex: 10 + index,
+        marginBottom: index < totalCards - 1 ? '100vh' : '0',
       }}
     >
       {children}
