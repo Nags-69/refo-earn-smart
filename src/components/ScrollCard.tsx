@@ -12,7 +12,6 @@ const ScrollCard = ({ children, index, totalCards = 5, className }: ScrollCardPr
   const cardRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [scale, setScale] = useState(1);
-  const [brightness, setBrightness] = useState(1);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -39,19 +38,14 @@ const ScrollCard = ({ children, index, totalCards = 5, className }: ScrollCardPr
       if (!cardRef.current) return;
       
       const rect = cardRef.current.getBoundingClientRect();
-      const topOffset = 80 + index * 30; // Increased spacing between stacked cards
+      const topOffset = 80 + index * 30;
       
-      // Calculate how much the card is "stuck" at the top
       if (rect.top <= topOffset + 20) {
-        // Card is stuck - calculate scale based on how far it is from ideal position
         const distanceFromTop = Math.max(0, topOffset - rect.top + 80);
-        const scaleReduction = Math.min(distanceFromTop / 500, 0.12); // Max 12% scale reduction
-        const brightnessReduction = Math.min(distanceFromTop / 800, 0.15); // Slight dimming
+        const scaleReduction = Math.min(distanceFromTop / 500, 0.1);
         setScale(1 - scaleReduction);
-        setBrightness(1 - brightnessReduction);
       } else {
         setScale(1);
-        setBrightness(1);
       }
     };
 
@@ -61,7 +55,6 @@ const ScrollCard = ({ children, index, totalCards = 5, className }: ScrollCardPr
     return () => window.removeEventListener('scroll', handleScroll);
   }, [index]);
 
-  // Each card sticks at a progressively higher position so they stack visually
   const topOffset = 80 + index * 30;
 
   return (
@@ -79,17 +72,13 @@ const ScrollCard = ({ children, index, totalCards = 5, className }: ScrollCardPr
         top: `${topOffset}px`,
         zIndex: 10 + index,
         transform: `scale(${scale})`,
-        filter: `brightness(${brightness})`,
-        transition: 'transform 0.2s ease-out, filter 0.2s ease-out, opacity 0.7s cubic-bezier(0.25,0.46,0.45,0.94)',
+        transition: 'transform 0.2s ease-out, opacity 0.7s cubic-bezier(0.25,0.46,0.45,0.94)',
       }}
     >
       <div 
         className="rounded-3xl transition-shadow duration-300 overflow-hidden"
         style={{
-          boxShadow: `
-            0 ${15 + index * 8}px ${40 + index * 15}px -15px rgba(0,0,0,${0.15 + index * 0.05}),
-            0 ${5 + index * 2}px ${15 + index * 5}px -5px rgba(0,0,0,${0.1 + index * 0.03})
-          `,
+          boxShadow: `0 ${15 + index * 8}px ${40 + index * 15}px -15px rgba(0,0,0,${0.12 + index * 0.04})`,
         }}
       >
         {children}
