@@ -8,10 +8,11 @@ interface ScrollCardProps {
   className?: string;
 }
 
-const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
+const ScrollCard = ({ children, index, totalCards = 5, className }: ScrollCardProps) => {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [scale, setScale] = useState(1);
+  const [brightness, setBrightness] = useState(1);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -38,17 +39,19 @@ const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
       if (!cardRef.current) return;
       
       const rect = cardRef.current.getBoundingClientRect();
-      const topOffset = 60 + index * 20;
+      const topOffset = 80 + index * 30; // Increased spacing between stacked cards
       
       // Calculate how much the card is "stuck" at the top
-      // When the card is at its sticky position, reduce scale based on distance from viewport top
-      if (rect.top <= topOffset + 10) {
+      if (rect.top <= topOffset + 20) {
         // Card is stuck - calculate scale based on how far it is from ideal position
-        const distanceFromTop = Math.max(0, topOffset - rect.top + 50);
-        const scaleReduction = Math.min(distanceFromTop / 800, 0.08); // Max 8% scale reduction
+        const distanceFromTop = Math.max(0, topOffset - rect.top + 80);
+        const scaleReduction = Math.min(distanceFromTop / 500, 0.12); // Max 12% scale reduction
+        const brightnessReduction = Math.min(distanceFromTop / 800, 0.15); // Slight dimming
         setScale(1 - scaleReduction);
+        setBrightness(1 - brightnessReduction);
       } else {
         setScale(1);
+        setBrightness(1);
       }
     };
 
@@ -58,31 +61,35 @@ const ScrollCard = ({ children, index, className }: ScrollCardProps) => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, [index]);
 
-  // Each card sticks at a slightly higher position so they stack
-  const topOffset = 60 + index * 20;
+  // Each card sticks at a progressively higher position so they stack visually
+  const topOffset = 80 + index * 30;
 
   return (
     <div
       ref={cardRef}
       className={cn(
-        "sticky w-full max-w-5xl mx-auto origin-top",
+        "sticky w-full max-w-5xl mx-auto origin-top will-change-transform",
         "transition-opacity duration-700 ease-[cubic-bezier(0.25,0.46,0.45,0.94)]",
         isVisible 
           ? "opacity-100" 
-          : "opacity-0 translate-y-16",
+          : "opacity-0 translate-y-20",
         className
       )}
       style={{
         top: `${topOffset}px`,
         zIndex: 10 + index,
         transform: `scale(${scale})`,
-        transition: 'transform 0.15s ease-out, opacity 0.7s cubic-bezier(0.25,0.46,0.45,0.94)',
+        filter: `brightness(${brightness})`,
+        transition: 'transform 0.2s ease-out, filter 0.2s ease-out, opacity 0.7s cubic-bezier(0.25,0.46,0.45,0.94)',
       }}
     >
       <div 
-        className="rounded-3xl transition-shadow duration-300"
+        className="rounded-3xl transition-shadow duration-300 overflow-hidden"
         style={{
-          boxShadow: `0 ${10 + index * 5}px ${30 + index * 10}px -10px rgba(0,0,0,${0.2 + index * 0.05})`,
+          boxShadow: `
+            0 ${15 + index * 8}px ${40 + index * 15}px -15px rgba(0,0,0,${0.15 + index * 0.05}),
+            0 ${5 + index * 2}px ${15 + index * 5}px -5px rgba(0,0,0,${0.1 + index * 0.03})
+          `,
         }}
       >
         {children}

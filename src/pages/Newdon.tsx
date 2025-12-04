@@ -348,9 +348,11 @@ const Newdon = () => {
           </div>
         </section>
 
-        {/* Stacked Cards Section */}
+        {/* Stacked Cards Section with Parallax */}
         <section className="relative px-4 pb-16">
-          <div className="space-y-[80vh]">
+          {/* Spacer to allow cards to stack properly */}
+          <div className="relative" style={{ minHeight: `${5 * 100}vh` }}>
+            <div className="space-y-[100vh]">
             {/* Card 1: How It Works */}
             <ScrollCard index={0} totalCards={3}>
               <div className="bg-card/90 backdrop-blur-xl rounded-3xl border border-border/50 shadow-2xl p-8 md:p-12 lg:p-16">
@@ -503,6 +505,7 @@ const Newdon = () => {
                 </AnimatedSection>
               </div>
             </ScrollCard>
+            </div>
           </div>
         </section>
 
