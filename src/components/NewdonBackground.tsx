@@ -168,8 +168,7 @@ const NewdonBackground = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
-      style={{ background: "linear-gradient(135deg, hsl(222, 47%, 6%) 0%, hsl(240, 30%, 10%) 50%, hsl(260, 35%, 8%) 100%)" }}
+      className="fixed inset-0 pointer-events-none z-0 bg-background"
     />
   );
 };
