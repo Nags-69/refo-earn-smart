@@ -21,11 +21,7 @@ const Newdon = () => {
   const [featuredOffers, setFeaturedOffers] = useState<any[]>([]);
   const { user } = useAuth();
 
-  useEffect(() => {
-    if (user) {
-      navigate("/dashboard");
-    }
-  }, [user, navigate]);
+  // No automatic redirect - let users stay on homepage after login
 
   useEffect(() => {
     const fetchFeaturedOffers = async () => {
@@ -156,7 +152,6 @@ const Newdon = () => {
         onOpenChange={setShowAuthModal}
         onSuccess={() => {
           setShowAuthModal(false);
-          navigate("/dashboard");
         }}
       />
       
