@@ -1,13 +1,17 @@
 import { useEffect, useRef } from "react";
 
-interface Dash {
+interface Dot {
   x: number;
   y: number;
   originX: number;
   originY: number;
-  angle: number;
-  length: number;
-  opacity: number;
+  vx: number;
+  vy: number;
+  radius: number;
+  color: string;
+  glowColor: string;
+  phase: number;
+  speed: number;
 }
 
 const AnimatedBackground = () => {
@@ -21,79 +25,100 @@ const AnimatedBackground = () => {
     if (!ctx) return;
 
     let animationId: number;
-    let dashes: Dash[] = [];
+    let dots: Dot[] = [];
     let mouseX = -1000;
     let mouseY = -1000;
+    let time = 0;
+
+    const colors = [
+      { fill: "hsla(217, 91%, 60%, 0.8)", glow: "hsla(217, 91%, 60%, 0.4)" },   // Blue
+      { fill: "hsla(262, 83%, 58%, 0.8)", glow: "hsla(262, 83%, 58%, 0.4)" },   // Purple
+      { fill: "hsla(330, 81%, 60%, 0.8)", glow: "hsla(330, 81%, 60%, 0.4)" },   // Pink
+      { fill: "hsla(199, 89%, 48%, 0.8)", glow: "hsla(199, 89%, 48%, 0.4)" },   // Cyan
+      { fill: "hsla(173, 80%, 40%, 0.8)", glow: "hsla(173, 80%, 40%, 0.4)" },   // Teal
+      { fill: "hsla(271, 76%, 53%, 0.8)", glow: "hsla(271, 76%, 53%, 0.4)" },   // Violet
+    ];
 
     const resize = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      initDashes();
+      initDots();
     };
 
-    const initDashes = () => {
-      const dashCount = Math.floor((canvas.width * canvas.height) / 8000);
-      dashes = [];
+    const initDots = () => {
+      const dotCount = Math.floor((canvas.width * canvas.height) / 6000);
+      dots = [];
       
-      for (let i = 0; i < dashCount; i++) {
+      for (let i = 0; i < dotCount; i++) {
         const x = Math.random() * canvas.width;
         const y = Math.random() * canvas.height;
-        dashes.push({
+        const colorSet = colors[Math.floor(Math.random() * colors.length)];
+        
+        dots.push({
           x,
           y,
           originX: x,
           originY: y,
-          angle: Math.random() * Math.PI * 2,
-          length: Math.random() * 12 + 6,
-          opacity: Math.random() * 0.5 + 0.3,
+          vx: 0,
+          vy: 0,
+          radius: Math.random() * 3 + 1.5,
+          color: colorSet.fill,
+          glowColor: colorSet.glow,
+          phase: Math.random() * Math.PI * 2,
+          speed: Math.random() * 0.5 + 0.3,
         });
       }
     };
 
-    const drawDash = (d: Dash) => {
-      ctx.save();
-      ctx.translate(d.x, d.y);
-      ctx.rotate(d.angle);
+    const drawDot = (d: Dot) => {
+      // Glow effect
       ctx.beginPath();
-      ctx.moveTo(-d.length / 2, 0);
-      ctx.lineTo(d.length / 2, 0);
-      ctx.strokeStyle = `hsla(217, 91%, 60%, ${d.opacity})`;
-      ctx.lineWidth = 2;
-      ctx.lineCap = "round";
-      ctx.stroke();
-      ctx.restore();
+      ctx.arc(d.x, d.y, d.radius * 3, 0, Math.PI * 2);
+      ctx.fillStyle = d.glowColor;
+      ctx.fill();
+      
+      // Main dot
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.radius, 0, Math.PI * 2);
+      ctx.fillStyle = d.color;
+      ctx.fill();
     };
 
-    const updateDash = (d: Dash) => {
+    const updateDot = (d: Dot) => {
+      // Continuous floating animation
+      const floatX = Math.sin(time * d.speed + d.phase) * 20;
+      const floatY = Math.cos(time * d.speed * 0.8 + d.phase) * 15;
+      
+      // Target position with floating
+      let targetX = d.originX + floatX;
+      let targetY = d.originY + floatY;
+      
+      // Cursor interaction - push away
       const dx = d.x - mouseX;
       const dy = d.y - mouseY;
       const dist = Math.sqrt(dx * dx + dy * dy);
-      const maxDist = 200;
+      const maxDist = 150;
 
       if (dist < maxDist && dist > 0) {
-        // Push away from cursor
         const force = (maxDist - dist) / maxDist;
-        const pushX = (dx / dist) * force * 60;
-        const pushY = (dy / dist) * force * 60;
-        d.x = d.originX + pushX;
-        d.y = d.originY + pushY;
-        
-        // Rotate towards movement direction
-        const targetAngle = Math.atan2(pushY, pushX);
-        d.angle += (targetAngle - d.angle) * 0.1;
-      } else {
-        // Return to origin smoothly
-        d.x += (d.originX - d.x) * 0.05;
-        d.y += (d.originY - d.y) * 0.05;
+        const pushX = (dx / dist) * force * 80;
+        const pushY = (dy / dist) * force * 80;
+        targetX += pushX;
+        targetY += pushY;
       }
+      
+      // Smooth movement towards target
+      d.x += (targetX - d.x) * 0.08;
+      d.y += (targetY - d.y) * 0.08;
     };
 
     const animate = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      time += 0.02;
       
-      dashes.forEach(d => {
-        updateDash(d);
-        drawDash(d);
+      dots.forEach(d => {
+        updateDot(d);
+        drawDot(d);
       });
       
       animationId = requestAnimationFrame(animate);
